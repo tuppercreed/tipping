@@ -12,6 +12,8 @@ export default function Ladder() {
                     <li>{player.name} - {player.score}</li>
                 )}
             </ol>
+
+
         </>
     )
 }

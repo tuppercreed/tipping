@@ -1,8 +1,33 @@
+import { Prisma } from "@prisma/client";
+import { GetStaticProps } from "next";
 import React from "react";
 import { SelectTips } from "../components/tipping";
+import { AppConfig } from "../lib/app.config";
+import prisma from "../lib/prisma";
 
-export default function Games() {
-    const gamesList = [{ homeTeam: 'Brisbane', awayTeam: 'Collingwood' }, { homeTeam: 'North Melbourne', awayTeam: 'Bulldogs' }, { homeTeam: 'West Coast', awayTeam: 'Sydney' }, { homeTeam: 'St Kilda', awayTeam: 'Gold Coast' }];
+export const getStaticProps: GetStaticProps = async () => {
+    const gameSelect: Prisma.GameSelect = {
+        homeTeam: {
+            select: {
+                name: true
+            }
+        },
+        awayTeam: {
+            select: {
+                name: true
+            }
+        }
+    };
+
+    const games = await prisma.game.findMany({
+        where: { round: { year: new Date().getFullYear(), round: AppConfig.round } },
+        select: gameSelect,
+    });
+    return { props: { games } };
+}
+
+export default function Games({ games }: { games: { homeTeam: { name: string }, awayTeam: { name: string } }[] }) {
+    let gamesList = games.map((game => { let simplifiedGame = { homeTeam: game.homeTeam.name, awayTeam: game.awayTeam.name }; return simplifiedGame; }));
 
     return (
         <>

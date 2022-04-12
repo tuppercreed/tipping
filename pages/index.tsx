@@ -5,6 +5,7 @@ import { GamesResponse, getGames, getLocalGames } from '../lib/games'
 import { AppConfig } from '../lib/app.config'
 import { RoundManager } from '../lib/picker'
 import { SelectTips } from '../components/tipping'
+import { Round } from '../lib/squiggle/db'
 
 export const getStaticProps: GetStaticProps = async () => {
   //const res = await fetch(`${AppConfig.aflEndpoint}?q=games;year=${new Date().getFullYear()};round=${5}`)
@@ -14,6 +15,8 @@ export const getStaticProps: GetStaticProps = async () => {
   if (AppConfig.local) {
     games = await getLocalGames('5');
   } else {
+    let _games = await Round(5);
+    console.log(JSON.stringify(_games));
     games = await getGames(key);
   }
 

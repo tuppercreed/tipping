@@ -1,27 +1,17 @@
 import React, { useState } from 'react'
 import Image, { StaticImageData } from 'next/image'
-import { Brisbane, Bulldogs, Collingwood, GoldCoast, NorthMelbourne, StKilda, Sydney, WestCoast } from '../lib/index'
 
-const teamLogos: { [key: string]: StaticImageData } = {
-    'Brisbane': Brisbane,
-    'Bulldogs': Bulldogs,
-    'Collingwood': Collingwood,
-    'Gold Coast': GoldCoast,
-    'North Melbourne': NorthMelbourne,
-    'St Kilda': StKilda,
-    'Sydney': Sydney,
-    'West Coast': WestCoast,
-}
 
 function Team(props: {
     teamName: string, handleClick: (teamName: string) => void
 }) {
+    const logoPath = `/teamLogos/${props.teamName.replaceAll(' ', '_')}.svg`;
 
 
     return (
         <div onClick={() => props.handleClick(props.teamName)} className='m-1 mtall:md:m-2 tall:m-2 rounded-3xl hoverable:hover:ring-4 ring-lime-500 border-2 mtall:md:border-4 border-fuchsia-200 shadow-md flex-grow flex flex-col justify-center'>
             <div className='m-1 mtall:md:m-2 tall:m-2 min-w-[30vw] min-h-[10vh] relative max-w-full flex-grow'>
-                <Image src={teamLogos[props.teamName]} alt={`Logo of ${props.teamName}`} className='h-auto' layout='fill' objectFit='contain' />
+                <Image src={logoPath} alt={`Logo of ${props.teamName}`} className='h-auto' layout='fill' objectFit='contain' />
             </div>
             <h2 className='text-xl mtall:md:text-2xl tall:text-2xl text-center my-1 md:my-2 tall:my-2'>{props.teamName}</h2>
 
