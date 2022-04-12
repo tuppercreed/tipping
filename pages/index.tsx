@@ -1,11 +1,13 @@
 import type { GetStaticProps, NextPage } from 'next'
 import Head from 'next/head'
 import Image from 'next/image'
-import { GamesResponse, getGames, getLocalGames } from '../lib/games'
+import { GamesResponse, getGames } from '../lib/games'
 import { AppConfig } from '../lib/app.config'
-import { RoundManager } from '../lib/picker'
 import { SelectTips } from '../components/tipping'
 import { Round } from '../lib/squiggle/db'
+import Link from 'next/link'
+import prisma from '../lib/prisma'
+import { Prisma } from '@prisma/client'
 
 export const getStaticProps: GetStaticProps = async () => {
   //const res = await fetch(`${AppConfig.aflEndpoint}?q=games;year=${new Date().getFullYear()};round=${5}`)
@@ -13,23 +15,30 @@ export const getStaticProps: GetStaticProps = async () => {
   const key = `games;year=${new Date().getFullYear().toString()};round=${5}`;
   let games = {};
   if (AppConfig.local) {
-    games = await getLocalGames('5');
+    const gameSelect: Prisma.GameSelect = {
+      homeTeam: {
+        select: { name: true }
+      },
+      awayTeam: {
+        select: {
+          name: true
+        }
+      }
+    };
+
+    const games = await prisma.game.findMany({
+      where: { round: { year: new Date().getFullYear(), round: AppConfig.round } }, select: gameSelect,
+    });
+
+    return { props: { games } };
   } else {
-    let _games = await Round(5);
-    console.log(JSON.stringify(_games));
-    games = await getGames(key);
+    throw new Error('unimplemented')
   }
 
-  return {
-    props: {
-      games
-    }
-  }
 }
 
-export default function Home({ games }: { games: GamesResponse }) {
-
-  const gamesList = [{ homeTeam: 'Brisbane', awayTeam: 'Collingwood' }, { homeTeam: 'North Melbourne', awayTeam: 'Bulldogs' }, { homeTeam: 'West Coast', awayTeam: 'Sydney' }, { homeTeam: 'St Kilda', awayTeam: 'Gold Coast' }];
+export default function Home({ games }: { games: { homeTeam: { name: string }, awayTeam: { name: string } }[] }) {
+  let gamesList = games.map((game => { let simplifiedGame = { homeTeam: game.homeTeam.name, awayTeam: game.awayTeam.name }; return simplifiedGame; }));
 
   return (
     <div>
@@ -44,17 +53,14 @@ export default function Home({ games }: { games: GamesResponse }) {
           AFL Tipping with <a href="https://nextjs.org">Next.js!</a>
         </h1>
 
-        {games.games ? (
-          games.games!.map((game) => <li key={game.id}>{game.ateam} vs. {game.hteam} at {game.date}</li>)
-
-        ) : (
-          <p>Games data missing</p>
-        )}
+        <ol>
+          {gamesList.map((game) => <li key={game.homeTeam}>{game.homeTeam} vs. {game.awayTeam}</li>)}
+        </ol>
 
         <hr />
 
-        <a href='/api/auth/login'>Login</a>
-        <a href='/api/auth/logout'>Logout</a>
+        <Link href='/api/auth/login'>Login</Link>
+        <Link href='/api/auth/logout'>Logout</Link>
 
         <hr />
 

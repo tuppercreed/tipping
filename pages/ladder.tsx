@@ -9,7 +9,7 @@ export default function Ladder() {
 
             <ol className='m-2 list-decimal text-center'>
                 {rankings.map((player) =>
-                    <li>{player.name} - {player.score}</li>
+                    <li key={player.name}>{player.name} - {player.score}</li>
                 )}
             </ol>
 

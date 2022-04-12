@@ -37,13 +37,6 @@ export const fetcher = async (url: string): Promise<GamesResponse> => {
     return await r.json()
 }
 
-export async function getLocalGames(key: string) {
-    const fullPath = path.join(process.cwd(), 'public', 'rounds', `${key}.json`);
-    const fileContents = fs.readFileSync(fullPath, 'utf8');
-    const games: GamesResponse = JSON.parse(fileContents);
-    return games
-}
-
 export async function getGames(key: string) {
     const url = `${AppConfig.aflEndpoint}?q=${key}`;
     let headers = new Headers({
