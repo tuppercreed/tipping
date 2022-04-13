@@ -1,9 +1,9 @@
 import { Prisma } from "@prisma/client";
 import { GetStaticProps } from "next";
 import React from "react";
-import { SelectTips } from "../components/tipping";
-import { AppConfig } from "../lib/app.config";
-import prisma from "../lib/prisma";
+import { SelectTips } from "../common/components/tipping";
+import { AppConfig } from "../common/utils/app.config";
+import prisma from "../common/utils/prisma";
 
 export const getStaticProps: GetStaticProps = async () => {
     const gameSelect: Prisma.GameSelect = {

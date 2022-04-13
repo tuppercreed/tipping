@@ -1,12 +1,12 @@
 import type { GetStaticProps, NextPage } from 'next'
 import Head from 'next/head'
 import Image from 'next/image'
-import { GamesResponse, getGames } from '../lib/games'
-import { AppConfig } from '../lib/app.config'
-import { SelectTips } from '../components/tipping'
-import { Round } from '../lib/squiggle/db'
+import { GamesResponse, getGames } from '../common/utils/games'
+import { AppConfig } from '../common/utils/app.config'
+import { SelectTips } from '../common/components/tipping'
+import { Round } from '../common/utils/squiggle/db'
 import Link from 'next/link'
-import prisma from '../lib/prisma'
+import prisma from '../common/utils/prisma'
 import { Prisma } from '@prisma/client'
 
 export const getStaticProps: GetStaticProps = async () => {

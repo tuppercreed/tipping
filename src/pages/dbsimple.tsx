@@ -1,6 +1,6 @@
 import { GetStaticProps } from "next";
 import { Prisma } from '@prisma/client';
-import prisma from '../lib/prisma';
+import prisma from '../common/utils/prisma';
 
 export const getStaticProps: GetStaticProps = async () => {
     const gameSelect: Prisma.GameSelect = {

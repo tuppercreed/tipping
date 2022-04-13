@@ -1,7 +1,7 @@
 import { Game } from './types'
 import { fetchGames } from './fetch'
 import parseISO from 'date-fns/parseISO'
-import prisma from '../../lib/prisma'
+import prisma from '../prisma'
 import { Prisma } from '@prisma/client'
 import { AppConfig } from '../app.config'
 
