@@ -8,6 +8,11 @@ import { Round } from '../common/utils/squiggle/db'
 import Link from 'next/link'
 import prisma from '../common/utils/prisma'
 import { Prisma } from '@prisma/client'
+import Auth from '../modules/supabase/components/Auth'
+import Account from '../modules/supabase/components/Account'
+import { useState, useEffect } from 'react'
+import { supabase } from '../modules/supabase/client'
+import { Session } from '@supabase/supabase-js'
 
 export const getStaticProps: GetStaticProps = async () => {
   //const res = await fetch(`${AppConfig.aflEndpoint}?q=games;year=${new Date().getFullYear()};round=${5}`)
@@ -40,6 +45,15 @@ export const getStaticProps: GetStaticProps = async () => {
 export default function Home({ games }: { games: { homeTeam: { name: string }, awayTeam: { name: string } }[] }) {
   let gamesList = games.map((game => { let simplifiedGame = { homeTeam: game.homeTeam.name, awayTeam: game.awayTeam.name }; return simplifiedGame; }));
 
+  const [session, setSession] = useState<Session | null>(null);
+
+  useEffect(() => {
+    setSession(supabase.auth.session());
+    supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
+  }, [])
+
   return (
     <div>
       <Head>
@@ -59,8 +73,17 @@ export default function Home({ games }: { games: { homeTeam: { name: string }, a
 
         <hr />
 
+        <p>Auth0</p>
+
         <Link href='/api/auth/login'>Login</Link>
         <Link href='/api/auth/logout'>Logout</Link>
+
+        <p>Supabase</p>
+
+        <div className='container' style={{ padding: '50px 0 100px 0' }}>
+          {!session ? <Auth /> : <Account key={session!.user!.id} session={session} />}
+        </div>
+
 
         <hr />
 
