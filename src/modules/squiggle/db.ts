@@ -1,9 +1,9 @@
 import { Game } from './types'
 import { fetchGames } from './fetch'
 import parseISO from 'date-fns/parseISO'
-import prisma from '../prisma'
+import prisma from '../../common/utils/prisma'
 import { Prisma } from '@prisma/client'
-import { AppConfig } from '../app.config'
+import { AppConfig } from '../../common/utils/app.config'
 
 
 class SquiggleTranslation {

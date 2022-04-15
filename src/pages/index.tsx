@@ -4,7 +4,7 @@ import Image from 'next/image'
 import { GamesResponse, getGames } from '../common/utils/games'
 import { AppConfig } from '../common/utils/app.config'
 import { SelectTips } from '../common/components/tipping'
-import { Round } from '../common/utils/squiggle/db'
+import { Round } from '../modules/squiggle/db'
 import Link from 'next/link'
 import prisma from '../common/utils/prisma'
 import { Prisma } from '@prisma/client'
@@ -13,37 +13,15 @@ import Account from '../modules/supabase/components/Account'
 import { useState, useEffect } from 'react'
 import { supabase } from '../modules/supabase/client'
 import { Session } from '@supabase/supabase-js'
+import { fetchGames, fetchTeams } from '../modules/squiggle/fetch'
+import { updateGames, updateTeams } from '../modules/squiggle/toSupabase'
+import { groupBy } from '../common/utils/functions'
+import { parseISO } from 'date-fns'
+import { stringify } from 'querystring'
 
-export const getStaticProps: GetStaticProps = async () => {
-  //const res = await fetch(`${AppConfig.aflEndpoint}?q=games;year=${new Date().getFullYear()};round=${5}`)
-  //const games: GamesResponse = await res.json()
-  const key = `games;year=${new Date().getFullYear().toString()};round=${5}`;
-  let games = {};
-  if (AppConfig.local) {
-    const gameSelect: Prisma.GameSelect = {
-      homeTeam: {
-        select: { name: true }
-      },
-      awayTeam: {
-        select: {
-          name: true
-        }
-      }
-    };
 
-    const games = await prisma.game.findMany({
-      where: { round: { year: new Date().getFullYear(), round: AppConfig.round } }, select: gameSelect,
-    });
 
-    return { props: { games } };
-  } else {
-    throw new Error('unimplemented')
-  }
-
-}
-
-export default function Home({ games }: { games: { homeTeam: { name: string }, awayTeam: { name: string } }[] }) {
-  let gamesList = games.map((game => { let simplifiedGame = { homeTeam: game.homeTeam.name, awayTeam: game.awayTeam.name }; return simplifiedGame; }));
+export default function Home() {
 
   const [session, setSession] = useState<Session | null>(null);
 
@@ -67,9 +45,6 @@ export default function Home({ games }: { games: { homeTeam: { name: string }, a
           AFL Tipping with <a href="https://nextjs.org">Next.js!</a>
         </h1>
 
-        <ol>
-          {gamesList.map((game) => <li key={game.homeTeam}>{game.homeTeam} vs. {game.awayTeam}</li>)}
-        </ol>
 
         <hr />
 
@@ -85,9 +60,6 @@ export default function Home({ games }: { games: { homeTeam: { name: string }, a
         </div>
 
 
-        <hr />
-
-        <SelectTips games={gamesList} />
 
 
       </main>

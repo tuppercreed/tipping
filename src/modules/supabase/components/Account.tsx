@@ -19,7 +19,7 @@ export default function Account({ session }: { session: Session }) {
             setLoading(true);
             const user = supabase.auth.user();
 
-            let { data, error, status } = await supabase.from('profiles').select('username, website, avatar_url').eq('id', user!.id).single();
+            let { data, error, status } = await supabase.from('person').select('username, website, avatar_url').eq('id', user!.id).single();
 
             if (error && status !== 406) {
                 throw error
@@ -52,7 +52,7 @@ export default function Account({ session }: { session: Session }) {
                 updated_at: new Date(),
             };
 
-            let { error } = await supabase.from('profiles').upsert(updates, {
+            let { error } = await supabase.from('person').upsert(updates, {
                 returning: 'minimal',
             });
 

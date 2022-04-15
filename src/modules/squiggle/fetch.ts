@@ -1,4 +1,4 @@
-import { AppConfig } from '../app.config'
+import { AppConfig } from '../../common/utils/app.config'
 
 import { SquiggleResponse } from './types';
 
