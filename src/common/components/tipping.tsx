@@ -4,6 +4,7 @@ import { Game, GamesApiToGames, readGames, Team } from '../utils/game';
 import { supabase } from '../../modules/supabase/client';
 import { PostgrestError, Session } from '@supabase/supabase-js';
 import { isFuture, isPast } from 'date-fns';
+import { useRound } from '../hooks/tips';
 
 
 function Team(props: {
@@ -40,32 +41,19 @@ export function SelectTeam(props: { homeTeam: Team, awayTeam: Team, game: Game, 
 
 export function SelectTips(props: { defaultRound: number, handleSubmit: (event: React.FormEvent<HTMLFormElement>, tips: [Team, Game][]) => void }) {
     const [round, setRound] = useState<number>(props.defaultRound);
-    const [games, setGames] = useState<Game[]>([]);
+    // const [games, setGames] = useState<Game[]>([]);
+    // Query database when round selection is changed
+    const games = useRound(round);
     const [step, setStep] = useState<number>(0);
     const [tips, setTips] = useState<[Team, Game][]>([]);
-    const [startedGames, setStartedGames] = useState<Game[]>([]);
 
     const allGamesDone = <p>All games started or completed for this round.</p>;
-    const someGamesDone = <div><p>Games already started or complete:</p><ul>{startedGames.map((game) => <li key={game.game_id}>{game.homeTeam} vs. {game.awayTeam}</li>)}</ul></div>;
-
-
-    // Query database when round selection is changed
-    useEffect(() => {
-        async function handleRoundChange() {
-            const data = await readGames(round);
-            const newGames = GamesApiToGames(data);
-            setGames(newGames.filter(game => isFuture(game.scheduled)));
-            setStartedGames(newGames.filter(game => isPast(game.scheduled)));
-        }
-
-        handleRoundChange()
-
-    }, [round]);
+    const someGamesDone = <div><p>Games already started or complete:</p><ul>{games.started.map((game) => <li key={game.game_id}>{game.homeTeam} vs. {game.awayTeam}</li>)}</ul></div>;
 
     // When the list of games changes, reset tips
     useEffect(() => {
         setStep(0);
-        setTips(Array(games?.length).fill(null));
+        setTips([]);
     }, [games]);
 
     function handleChoice(team: Team, game: Game) {
@@ -82,13 +70,13 @@ export function SelectTips(props: { defaultRound: number, handleSubmit: (event: 
                 <h2 className='text-xl text-center'>Round: {round}</h2>
                 <button onClick={() => setRound(round + 1)}>Next</button>
             </div>
-            {startedGames.length > 0 && (games.length > 0 ? someGamesDone : allGamesDone)}
+            {games.started.length > 0 && (games.upcoming.length > 0 ? someGamesDone : allGamesDone)}
             <form onSubmit={(e) => props.handleSubmit(e, tips)} className='flex-grow flex flex-row mtall:flex-col justify-evenly items-stretch'>
-                {step < games.length && <SelectTeam homeTeam={games[step].homeTeamObj} awayTeam={games[step].awayTeamObj} game={games[step]} handleClick={handleChoice} />}
+                {step < games.upcoming.length && <SelectTeam homeTeam={games.upcoming[step].homeTeamObj} awayTeam={games.upcoming[step].awayTeamObj} game={games.upcoming[step]} handleClick={handleChoice} />}
                 {step > 0 && <input type="button" value="Back" onClick={() => { if (step > 0) { setStep(step - 1) } }} className='grow-[0.3] bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 md:p-4 tall:p-4 rounded m-1 md:m-2 tall:m-2' />}
                 {/* Invisible button on first page so that other elements don't jump around */}
                 {step === 0 && <input type="button" value="Back" className='grow-[0.3] invisible bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 md:p-4 tall:p-4 rounded m-1 md:m-2 tall:m-2' />}
-                {step === games.length && <input type="submit" value="Done" className='grow bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 md:p-4 tall:p-4 rounded m-1 md:m-2 tall:m-2' />}
+                {step === games.upcoming.length && <input type="submit" value="Done" className='grow bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 md:p-4 tall:p-4 rounded m-1 md:m-2 tall:m-2' />}
             </form>
         </div>
     )
