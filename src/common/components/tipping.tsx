@@ -97,7 +97,7 @@ export function SelectTips(props: { session: Session, defaultRound: number, hand
     const [step, setStep] = useState<number>(0);
     const [tips, setTips] = useState<[Team, Game][]>([]);
 
-    const allGamesDone = <p>All games started or completed for this round.</p>;
+    const allGamesDone = <h3 className='my-12 text-3xl text-center'>All games started or completed for this round.</h3>;
 
     // When the list of games changes, reset tips
     useEffect(() => {
@@ -126,13 +126,14 @@ export function SelectTips(props: { session: Session, defaultRound: number, hand
             {games.upcoming.length === 0 && allGamesDone}
 
 
-            <form onSubmit={(e) => props.handleSubmit(e, tips)} className='flex-grow flex flex-row mtall:flex-col justify-evenly items-stretch'>
-                {step < games.upcoming.length && <SelectTeam session={props.session} homeTeam={games.upcoming[step].homeTeamObj} awayTeam={games.upcoming[step].awayTeamObj} game={games.upcoming[step]} handleClick={handleChoice} />}
-                {step > 0 && <input type="button" value="Back" onClick={() => { if (step > 0) { setStep(step - 1) } }} className='grow-[0.3] bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 md:p-4 tall:p-4 rounded m-1 md:m-2 tall:m-2' />}
-                {/* Invisible button on first page so that other elements don't jump around */}
-                {step === 0 && <input type="button" value="Back" className='grow-[0.3] invisible bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 md:p-4 tall:p-4 rounded m-1 md:m-2 tall:m-2' />}
-                {step === games.upcoming.length && <input type="submit" value="Done" className='grow bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 md:p-4 tall:p-4 rounded m-1 md:m-2 tall:m-2' />}
-            </form>
+            {games.upcoming.length > 0 &&
+                <form onSubmit={(e) => props.handleSubmit(e, tips)} className='flex-grow flex flex-row mtall:flex-col justify-evenly items-stretch'>
+                    {step < games.upcoming.length && <SelectTeam session={props.session} homeTeam={games.upcoming[step].homeTeamObj} awayTeam={games.upcoming[step].awayTeamObj} game={games.upcoming[step]} handleClick={handleChoice} />}
+                    {step === games.upcoming.length && <input type="submit" value="Done" className='grow bg-blue-500 hover:bg-blue-700 text-white text-4xl py-1 px-2 md:p-4 tall:p-4 rounded m-1 md:m-2 tall:m-2' />}
+                    {step > 0 && <input type="button" value="Back" onClick={() => { if (step > 0) { setStep(step - 1) } }} className='grow-[0.3] bg-blue-500 hover:bg-blue-700 text-white text-3xl py-1 px-2 md:p-4 tall:p-4 rounded m-1 md:m-2 tall:m-2' />}
+                    {/* Invisible button on first page so that other elements don't jump around */}
+                    {step === 0 && <input type="button" value="Back" className='grow-[0.3] invisible bg-blue-500 hover:bg-blue-700 text-white text-3xl py-1 px-2 md:p-4 tall:p-4 rounded m-1 md:m-2 tall:m-2' />}
+                </form>}
         </div>
     )
 }
