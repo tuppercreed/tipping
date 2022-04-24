@@ -80,7 +80,7 @@ export function Progress(props: { games: { upcoming: Game[], started: Game[] }, 
     });
 
     return (
-        <ol className='list-none flex flex-row gap-4 place-items-center content-center justify-evenly'>
+        <ol className='my-2 mx-1 md:mx-2 list-none flex flex-row flex-wrap gap-1 md:gap-4 place-items-center content-center justify-evenly'>
             {startedElems}
             {upcomingElems}
             {/* Clickable submit button that jumps to one more than last upcoming game*/}
@@ -114,8 +114,8 @@ export function SelectTips(props: { session: Session, defaultRound: number, hand
     }
 
     return (
-        <div>
-            <div className='flex flex-row justify-center gap-4'>
+        <div className='flex flex-col flex-grow'>
+            <div className='flex flex-row justify-center gap-2 md:gap-4'>
                 <button onClick={() => setRound(round - 1)}><FontAwesomeIcon icon={faAngleLeft} /></button>
                 <h2 className='text-xl text-center'>Round: {round}</h2>
                 <button onClick={() => setRound(round + 1)}><FontAwesomeIcon icon={faAngleRight} /></button>
@@ -125,7 +125,6 @@ export function SelectTips(props: { session: Session, defaultRound: number, hand
             {games.upcoming.length > 0 && <Progress games={games} tips={tips} session={props.session} step={step} stepHandler={(newStep: number) => setStep(newStep)} />}
             {games.upcoming.length === 0 && allGamesDone}
 
-            <br />
 
             <form onSubmit={(e) => props.handleSubmit(e, tips)} className='flex-grow flex flex-row mtall:flex-col justify-evenly items-stretch'>
                 {step < games.upcoming.length && <SelectTeam session={props.session} homeTeam={games.upcoming[step].homeTeamObj} awayTeam={games.upcoming[step].awayTeamObj} game={games.upcoming[step]} handleClick={handleChoice} />}
@@ -159,9 +158,9 @@ export function Tips(props: { defaultRound: number, session: Session }) {
     }
 
     return (
-        <div>
+        <>
             {(submissionError === undefined) && <SelectTips session={props.session} defaultRound={props.defaultRound} handleSubmit={handleSubmit} />}
             {(submissionError !== undefined) && ((submissionError === null) ? <p>Submission success!</p> : <p>Submission failure!</p>)}
-        </div>
+        </>
     );
 }
