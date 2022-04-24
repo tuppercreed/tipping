@@ -77,7 +77,8 @@ export class Game {
             throw new Error("Failed to parse game that didn't have both a home and away team");
         }
 
-        this.scheduled = parseISO(gameApi.game.scheduled);
+        // Z is added to indicate that time is in UTC
+        this.scheduled = parseISO(gameApi.game.scheduled + 'Z');
         this.venue = gameApi.game.venue;
 
 
