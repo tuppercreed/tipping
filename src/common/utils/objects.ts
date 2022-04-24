@@ -38,6 +38,7 @@ export class Team {
     goals: number;
     behinds: number;
     tips: tipSupabase[];
+    abbreviation?: string;
 
     constructor(gameTeam: gameTeamSupabase) {
         if (gameTeam.team === undefined) {
@@ -50,6 +51,9 @@ export class Team {
             this.tips = []
         } else {
             this.tips = gameTeam.tip!
+        }
+        if ("abbreviation" in gameTeam.team!) {
+            this.abbreviation = gameTeam.team.abbreviation;
         }
     }
 

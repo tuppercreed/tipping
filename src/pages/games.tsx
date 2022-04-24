@@ -18,7 +18,6 @@ export default function AddTips() {
 
     return (
         <>
-            <h2 className='text-xl text-center'>Round {AppConfig.round}</h2>
             {!session ? <Auth /> : <Tips defaultRound={AppConfig.round} session={session} />}
         </>
 
