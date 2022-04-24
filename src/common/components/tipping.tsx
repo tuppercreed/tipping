@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import Image, { StaticImageData } from 'next/image'
-import { Game, GamesApiToGames, readGames, Team } from '../utils/game';
+import { readGames, readTips } from '../utils/game';
+import { Game, gamesSupabaseToGames, Team } from '../utils/objects';
 import { supabase } from '../../modules/supabase/client';
 import { PostgrestError, Session } from '@supabase/supabase-js';
 import { isFuture, isPast } from 'date-fns';
 import { useRound } from '../hooks/tips';
 
 
-function Team(props: {
-    team: Team, game: Game, handleClick: (team: Team, game: Game) => void
+function TeamCard(props: {
+    session: Session, team: Team, game: Game, handleClick: (team: Team, game: Game) => void
 }) {
     const logoPath = `/teamLogos/${props.team.team_name.replaceAll(' ', '_')}.svg`;
 
@@ -19,12 +20,13 @@ function Team(props: {
                 <Image src={logoPath} alt={`Logo of ${props.team.team_name}`} className='h-auto' layout='fill' objectFit='contain' />
             </div>
             <h2 className='text-xl mtall:md:text-2xl tall:text-2xl text-center my-1 md:my-2 tall:my-2'>{props.team.team_name}</h2>
+            {props.team.tipped(props.session!.user!.id) && <p>Tipped</p>}
 
         </div>
     )
 }
 
-export function SelectTeam(props: { homeTeam: Team, awayTeam: Team, game: Game, handleClick: (team: Team, game: Game) => void }) {
+export function SelectTeam(props: { session: Session, homeTeam: Team, awayTeam: Team, game: Game, handleClick: (team: Team, game: Game) => void }) {
 
     function handleClick(team: Team, game: Game) {
         console.log(`Clicked Team: ${team.team_name}`)
@@ -33,13 +35,13 @@ export function SelectTeam(props: { homeTeam: Team, awayTeam: Team, game: Game, 
 
     return (
         <div className='flex flex-col md:flex-row tall:flex-col gap-1 items-stretch justify-center min-h-[10vh] grow-[4]'>
-            <Team handleClick={handleClick} team={props.homeTeam} game={props.game} />
-            <Team handleClick={handleClick} team={props.awayTeam} game={props.game} />
+            <TeamCard handleClick={handleClick} team={props.homeTeam} game={props.game} session={props.session} />
+            <TeamCard handleClick={handleClick} team={props.awayTeam} game={props.game} session={props.session} />
         </div>
     )
 }
 
-export function SelectTips(props: { defaultRound: number, handleSubmit: (event: React.FormEvent<HTMLFormElement>, tips: [Team, Game][]) => void }) {
+export function SelectTips(props: { session: Session, defaultRound: number, handleSubmit: (event: React.FormEvent<HTMLFormElement>, tips: [Team, Game][]) => void }) {
     const [round, setRound] = useState<number>(props.defaultRound);
     // const [games, setGames] = useState<Game[]>([]);
     // Query database when round selection is changed
@@ -52,6 +54,7 @@ export function SelectTips(props: { defaultRound: number, handleSubmit: (event: 
 
     // When the list of games changes, reset tips
     useEffect(() => {
+        readTips(round);
         setStep(0);
         setTips([]);
     }, [games]);
@@ -72,7 +75,7 @@ export function SelectTips(props: { defaultRound: number, handleSubmit: (event: 
             </div>
             {games.started.length > 0 && (games.upcoming.length > 0 ? someGamesDone : allGamesDone)}
             <form onSubmit={(e) => props.handleSubmit(e, tips)} className='flex-grow flex flex-row mtall:flex-col justify-evenly items-stretch'>
-                {step < games.upcoming.length && <SelectTeam homeTeam={games.upcoming[step].homeTeamObj} awayTeam={games.upcoming[step].awayTeamObj} game={games.upcoming[step]} handleClick={handleChoice} />}
+                {step < games.upcoming.length && <SelectTeam session={props.session} homeTeam={games.upcoming[step].homeTeamObj} awayTeam={games.upcoming[step].awayTeamObj} game={games.upcoming[step]} handleClick={handleChoice} />}
                 {step > 0 && <input type="button" value="Back" onClick={() => { if (step > 0) { setStep(step - 1) } }} className='grow-[0.3] bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 md:p-4 tall:p-4 rounded m-1 md:m-2 tall:m-2' />}
                 {/* Invisible button on first page so that other elements don't jump around */}
                 {step === 0 && <input type="button" value="Back" className='grow-[0.3] invisible bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 md:p-4 tall:p-4 rounded m-1 md:m-2 tall:m-2' />}
@@ -104,7 +107,7 @@ export function Tips(props: { defaultRound: number, session: Session }) {
 
     return (
         <div>
-            {(submissionError === undefined) && <SelectTips defaultRound={props.defaultRound} handleSubmit={handleSubmit} />}
+            {(submissionError === undefined) && <SelectTips session={props.session} defaultRound={props.defaultRound} handleSubmit={handleSubmit} />}
             {(submissionError !== undefined) && ((submissionError === null) ? <p>Submission success!</p> : <p>Submission failure!</p>)}
         </div>
     );

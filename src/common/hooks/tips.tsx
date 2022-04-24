@@ -1,6 +1,7 @@
 import { isFuture, isPast } from 'date-fns';
 import { useState, useEffect } from 'react';
-import { Game, GamesApiToGames, readGames } from '../utils/game';
+import { readGames } from '../utils/game';
+import { Game, gamesSupabaseToGames } from '../utils/objects'
 
 export function useRound(round: number) {
     const [games, setGames] = useState<{ upcoming: Game[], started: Game[] }>({ upcoming: [], started: [] });
@@ -8,7 +9,7 @@ export function useRound(round: number) {
     useEffect(() => {
         async function handleRoundChange() {
             const data = await readGames(round);
-            const newGames = GamesApiToGames(data);
+            const newGames = gamesSupabaseToGames(data);
             const upcoming = newGames.filter(game => isFuture(game.scheduled));
             const started = newGames.filter(game => isPast(game.scheduled));
             setGames({ upcoming: upcoming, started: started });
