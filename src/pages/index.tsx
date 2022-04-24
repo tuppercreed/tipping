@@ -1,23 +1,10 @@
-import type { GetStaticProps, NextPage } from 'next'
 import Head from 'next/head'
-import Image from 'next/image'
-import { GamesResponse, getGames } from '../common/utils/games'
-import { AppConfig } from '../common/utils/app.config'
-import { SelectTips } from '../common/components/tipping'
-import { Round } from '../modules/squiggle/db'
 import Link from 'next/link'
-import prisma from '../common/utils/prisma'
-import { Prisma } from '@prisma/client'
 import Auth from '../modules/supabase/components/Auth'
 import Account from '../modules/supabase/components/Account'
 import { useState, useEffect } from 'react'
 import { supabase } from '../modules/supabase/client'
 import { Session } from '@supabase/supabase-js'
-import { fetchGames, fetchTeams } from '../modules/squiggle/fetch'
-import { updateGames, updateTeams } from '../modules/squiggle/toSupabase'
-import { groupBy } from '../common/utils/functions'
-import { parseISO } from 'date-fns'
-import { stringify } from 'querystring'
 
 
 
