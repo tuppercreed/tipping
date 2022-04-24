@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Image, { StaticImageData } from 'next/image'
-import { Game, Team } from '../utils/game';
+import { Game, GamesApiToGames, readGames, Team } from '../utils/game';
 import { supabase } from '../../modules/supabase/client';
 import { Session } from '@supabase/supabase-js';
 
@@ -37,22 +37,48 @@ export function SelectTeam(props: { homeTeam: Team, awayTeam: Team, game: Game, 
     )
 }
 
-export function SelectTips(props: { games: Game[], session: Session }) {
-    const [step, setStep] = useState<number>(0);
-    const [tips, setTips] = useState<[Team, Game][]>(Array(props.games.length).fill(null));
+export function SelectTips(props: { games: Game[], step: number, tips: [Team, Game][], handleChoice: (team: Team, game: Game) => void, handleBack: () => void, handleSubmit: (event: React.FormEvent<HTMLFormElement>) => void }) {
+    return (
+        <>
+            <form onSubmit={props.handleSubmit} className='flex-grow flex flex-row mtall:flex-col justify-evenly items-stretch'>
+                {props.step < props.games.length && <SelectTeam homeTeam={props.games[props.step].homeTeamObj} awayTeam={props.games[props.step].awayTeamObj} game={props.games[props.step]} handleClick={props.handleChoice} />}
+                {props.step > 0 && <input type="button" value="Back" onClick={props.handleBack} className='grow-[0.3] bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 md:p-4 tall:p-4 rounded m-1 md:m-2 tall:m-2' />}
+                {/* Invisible button on first page so that other elements don't jump around */}
+                {props.step === 0 && <input type="button" value="Back" className='grow-[0.3] invisible bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 md:p-4 tall:p-4 rounded m-1 md:m-2 tall:m-2' />}
+                {props.step === props.games.length && <input type="submit" value="Done" className='grow bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 md:p-4 tall:p-4 rounded m-1 md:m-2 tall:m-2' />}
+            </form>
+        </>
+    )
+}
 
-    function handleClick(team: Team, game: Game) {
-        console.log(`Big boss for ${team.team_name}`)
+export function Tips(props: { defaultRound: number, session: Session }) {
+    const [round, setRound] = useState<number>(props.defaultRound);
+    const [games, setGames] = useState<Game[] | null>(null);
+    const [step, setStep] = useState<number>(0);
+    const [tips, setTips] = useState<[Team, Game][]>([]);
+
+    // Query database when round selection is changed
+    useEffect(() => {
+        async function handleRoundChange() {
+            const data = await readGames(round);
+            setGames(GamesApiToGames(data));
+        }
+
+        handleRoundChange()
+
+    }, [round]);
+
+    // When the list of games changes, reset tips
+    useEffect(() => {
+        setStep(0);
+        setTips(Array(games?.length).fill(null));
+    }, [games]);
+
+    function handleChoice(team: Team, game: Game) {
         const oldTips = tips.slice();
         oldTips[step] = [team, game];
         setTips(oldTips);
         setStep(step + 1);
-    }
-
-    function handleBack() {
-        if (step > 0) {
-            setStep(step - 1)
-        }
     }
 
     async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -62,50 +88,20 @@ export function SelectTips(props: { games: Game[], session: Session }) {
             return {
                 person_id: props.session.user!.id,
                 game_id: tip[1].game_id,
-                team_id: tip[0].team_id
-            }
+                team_id: tip[0].team_id,
+            };
         });
 
-        console.log("Request: ", JSON.stringify(tipsApi));
-
         const { data, error } = await supabase.from('tip').upsert(tipsApi, { returning: 'minimal' });
-
-        console.log("Data: ", JSON.stringify(data));
-        console.log("Error: ", JSON.stringify(error));
-
-
-
-        const JSONdata = JSON.stringify({ tips: tips });
-        const endpoint = '/api/form';
-
-        const options = {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSONdata,
-        }
-
-        const response = await fetch(endpoint, options);
-
-        const result: { data: string } = await response.json();
-
-        if (response.ok) {
-            alert(result.data)
-        }
-
-
     }
 
     return (
-        <>
-            <form onSubmit={handleSubmit} className='flex-grow flex flex-row mtall:flex-col justify-evenly items-stretch'>
-                {step < props.games.length && <SelectTeam homeTeam={props.games[step].homeTeamObj} awayTeam={props.games[step].awayTeamObj} game={props.games[step]} handleClick={handleClick} />}
-                {step > 0 && <input type="button" value="Back" onClick={handleBack} className='grow-[0.3] bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 md:p-4 tall:p-4 rounded m-1 md:m-2 tall:m-2' />}
-                {/* Invisible button on first page so that other elements don't jump around */}
-                {step === 0 && <input type="button" value="Back" className='grow-[0.3] invisible bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 md:p-4 tall:p-4 rounded m-1 md:m-2 tall:m-2' />}
-                {step === props.games.length && <input type="submit" value="Done" className='grow bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 md:p-4 tall:p-4 rounded m-1 md:m-2 tall:m-2' />}
-            </form>
-        </>
-    )
+        <div>
+            <button onClick={() => setRound(round - 1)}>Previous</button>
+            <h2 className='text-xl text-center'>Round: {round}</h2>
+            <button onClick={() => setRound(round + 1)}>Next</button>
+
+            {!games ? <p>No games</p> : <SelectTips games={games} step={step} tips={tips} handleChoice={handleChoice} handleBack={() => { if (step > 0) { setStep(step - 1) } }} handleSubmit={handleSubmit} />}
+        </div>
+    );
 }
