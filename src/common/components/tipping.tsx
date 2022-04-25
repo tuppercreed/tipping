@@ -9,6 +9,7 @@ import { useRound } from '../hooks/tips';
 import bg from '../../../public/background.jpg';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faAngleLeft, faAngleRight, faArrowRight, faArrowRightLong } from '@fortawesome/free-solid-svg-icons';
+import { AppConfig } from '../utils/app.config';
 
 
 function TeamCard(props: {
@@ -89,6 +90,24 @@ export function Progress(props: { games: { upcoming: Game[], started: Game[] }, 
     )
 }
 
+export function SelectRound(props: { round: number, handleRound: (round: number) => void }) {
+    const roundText = props.round ? <h2 className='text-xl text-center'>Round: {props.round}</h2> : <h2 className='text-xl text-center'>Overall</h2>;
+
+    const cycleRound = (round: number, change: number) => {
+        if (round + change < 0) return AppConfig.roundMax
+        else if (round + change <= AppConfig.roundMax) return round + change
+        else return 0
+    };
+
+    return (
+        <div className='flex flex-row justify-center gap-2 md:gap-4'>
+            <button onClick={() => props.handleRound(cycleRound(props.round, -1))}><FontAwesomeIcon icon={faAngleLeft} /></button>
+            {roundText}
+            <button onClick={() => props.handleRound(cycleRound(props.round, 1))}><FontAwesomeIcon icon={faAngleRight} /></button>
+        </div>
+    )
+}
+
 export function SelectTips(props: { session: Session, defaultRound: number, handleSubmit: (event: React.FormEvent<HTMLFormElement>, tips: [Team, Game][]) => void }) {
     const [round, setRound] = useState<number>(props.defaultRound);
     // const [games, setGames] = useState<Game[]>([]);
@@ -115,11 +134,8 @@ export function SelectTips(props: { session: Session, defaultRound: number, hand
 
     return (
         <div className='flex flex-col flex-grow'>
-            <div className='flex flex-row justify-center gap-2 md:gap-4'>
-                <button onClick={() => setRound(round - 1)}><FontAwesomeIcon icon={faAngleLeft} /></button>
-                <h2 className='text-xl text-center'>Round: {round}</h2>
-                <button onClick={() => setRound(round + 1)}><FontAwesomeIcon icon={faAngleRight} /></button>
-            </div>
+
+            <SelectRound round={round} handleRound={(newRound: number) => setRound(newRound)} />
 
 
             {games.upcoming.length > 0 && <Progress games={games} tips={tips} session={props.session} step={step} stepHandler={(newStep: number) => setStep(newStep)} />}

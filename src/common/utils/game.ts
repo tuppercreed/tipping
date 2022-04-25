@@ -25,5 +25,21 @@ export async function readTips(round: number) {
     } else {
         throw new Error('No data!');
     }
+}
+
+export async function readRankings(round: number) {
+    if (round > 0) {
+        const { data, error } = await supabase.from('competition_rankings_summary').select(`
+        person!inner(username), wins
+        `).eq('round_number', round).eq('round_year', new Date().getFullYear().toString());
+        if (data !== null) {
+            return (data as { person: { username: string }, wins: number }[]).map((d) => { return { username: d.person.username, wins: d.wins }; });
+        }
+    } else {
+        const { data, error } = await supabase.rpc('all_rankings', { r_year: new Date().getFullYear().toString() });
+        if (data !== null) {
+            return data as { username: string, wins: number }[]
+        }
+    }
 
 }

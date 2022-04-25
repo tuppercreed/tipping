@@ -134,4 +134,111 @@ CREATE POLICY "Users can delete tips." ON tip FOR DELETE WITH CHECK (auth.uid() 
     SELECT id FROM game WHERE game_started(scheduled) IS NOT TRUE
 ));
 
+
+CREATE OR REPLACE FUNCTION calculate_score(side game_team) RETURNS INTEGER AS
+$$
+    SELECT side.goals * 6 + side.behinds AS score;
+$$ LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION calculate_winner(home game_team, away game_team) RETURNS INTEGER AS
+$$
+DECLARE
+    home_score INTEGER := calculate_score(home);
+    away_score INTEGER := calculate_score(away);
+BEGIN
+    IF home_score > away_score THEN
+        RETURN home.team_id;
+    ELSIF home_score < away_score THEN
+        RETURN away.team_id;
+    ELSE
+        RETURN NULL;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION scores(r_year INTEGER, r_number INTEGER)
+RETURNS TABLE(game_id INTEGER, winner_team_id INTEGER) AS $$
+BEGIN
+    RETURN QUERY SELECT game.id, calculate_winner(home.*, away.*)
+    FROM game_team AS home
+    INNER JOIN game_team AS away ON home.game_id = away.game_id
+    INNER JOIN game ON home.game_id = game.id
+    WHERE game.round_year = r_year AND game.round_number = r_number AND home.home AND NOT away.home;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION round_rankings(r_year INTEGER, r_number INTEGER)
+RETURNS TABLE(round_year INTEGER, round_number INTEGER, person_id UUID, wins INTEGER) AS $$
+    SELECT r_year, r_number, tip.person_id, COUNT(*) AS wins 
+    FROM scores(r_year, r_number) AS score 
+    INNER JOIN tip 
+        ON score.game_id = tip.game_id 
+        AND score.winner_team_id = tip.team_id 
+    GROUP BY tip.person_id;
+$$ LANGUAGE SQL;
+
+CREATE TABLE competition_rankings_summary (
+    round_year INTEGER,
+    round_number INTEGER,
+    person_id UUID REFERENCES person,
+    wins INTEGER,
+    updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (round_year, round_number, person_id),
+    FOREIGN KEY (round_year, round_number) REFERENCES tournament_round (round_year, round_number)
+);
+
+CREATE TRIGGER set_timestamp_rankings_summary
+BEFORE UPDATE ON competition_rankings_summary
+FOR EACH ROW 
+EXECUTE FUNCTION trigger_set_timestamp();
+
+ALTER TABLE competition_rankings_summary ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Logged in can see all results." ON competition_rankings_summary FOR SELECT USING (
+    person_id IN (SELECT competitions_persons.person_id FROM competitions_persons WHERE competition_id IN
+    ( SELECT competition_id FROM competitions_persons WHERE competitions_persons.person_id = auth.uid() ))
+);
+
+CREATE OR REPLACE PROCEDURE insert_summary_rankings(r_year INTEGER, r_number INTEGER) AS $$
+    INSERT INTO competition_rankings_summary 
+    SELECT * FROM round_rankings(r_year, r_number) 
+    ON CONFLICT (round_year, round_number, person_id) DO UPDATE SET wins = EXCLUDED.wins;
+$$ LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION competition_rankings_round(comp_id INTEGER, r_year INTEGER, r_number INTEGER) 
+RETURNS TABLE (person_id UUID, wins INTEGER) 
+AS $$
+    SELECT competition_rankings_summary.person_id, wins AS total_wins 
+    FROM competition_rankings_summary
+    INNER JOIN competitions_persons
+    ON competition_rankings_summary.person_id = competitions_persons.person_id
+    WHERE round_year = r_year
+    AND round_number = r_number
+    AND competition_id = comp_id
+$$ LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION competition_rankings(comp_id INTEGER, r_year INTEGER) 
+RETURNS TABLE (person_id UUID, wins INTEGER) 
+AS $$
+    SELECT competition_rankings_summary.person_id, SUM(wins) AS total_wins 
+    FROM competition_rankings_summary
+    INNER JOIN competitions_persons
+    ON competition_rankings_summary.person_id = competitions_persons.person_id
+    WHERE round_year = r_year
+    AND competition_id = comp_id
+    GROUP BY competition_rankings_summary.person_id;
+$$ LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION all_rankings(r_year INTEGER) 
+RETURNS TABLE (username TEXT, wins INTEGER) 
+AS $$
+    SELECT username, SUM(wins) AS total_wins 
+    FROM competition_rankings_summary
+    INNER JOIN person
+    ON competition_rankings_summary.person_id = person.id
+    WHERE round_year = r_year
+    GROUP BY username;
+$$ LANGUAGE SQL;
+
+
 COMMIT;
