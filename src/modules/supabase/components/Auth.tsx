@@ -102,6 +102,7 @@ export default function Auth() {
         <div className='flex flex-col'>
             <SignInButton provider='google' />
             <SignInButton provider='github' />
+            <SignInButton provider='facebook' />
         </div>
     )
 
