@@ -10,7 +10,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </Head>
 
             <div className="h-full flex flex-col">
-                <main className="flex-grow flex flex-col">
+                <main className="flex-grow flex flex-col items-center">
                     <h1 className="text-2xl mtall:text-4xl text-center my-0.5 mtall:my-2">Tipping</h1>
                     {children}
                 </main>

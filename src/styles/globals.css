@@ -5,3 +5,48 @@
 html, body, #__next {
     height: 100%;
 }
+
+@layer components { 
+    .button {
+        --tw-bg-opacity: 1;
+        --tw-text-opacity: 1;
+        --tw-border-opacity: 1;
+        background-color: rgb(59 130 246 / var(--tw-bg-opacity));
+        color: rgb(255 255 255 / var(--tw-text-opacity));
+        font-size: 1.125rem/* 30px */;
+        line-height: 1.5rem/* 36px */;
+        padding: 0.5rem 1rem 0.5rem 1rem/* 16px */;
+        margin: 0.5rem 0 0.5rem 0;        
+        border-radius: 0.25rem/* 4px */;
+        box-sizing: border-box;
+        box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+        /*border-width: 1px;
+        border-color: rgb(243 244 246 / var(--tw-border-opacity));*/
+    }
+
+    .button:hover {
+        background-color: rgb(29 78 216 / var(--tw-bg-opacity)); 
+    }
+
+    /* horizontal line interrupted by div contents i.e. text */
+    /* see: https://stackoverflow.com/questions/2812770/add-centered-text-to-the-middle-of-a-horizontal-rule */
+    .separator {
+        display: flex;
+        align-items: center;
+        text-align: center;
+    }
+
+    .separator::before, .separator::after {
+        content: '';
+        flex: 1;
+        border-bottom: 1px solid #000;
+    }
+
+    .separator:not(:empty)::before {
+        margin-right: .25em;
+    }
+
+    .separator:not(:empty)::after {
+        margin-left: .25em;
+    }
+}
