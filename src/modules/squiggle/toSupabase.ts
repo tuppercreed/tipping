@@ -75,7 +75,7 @@ function toGameTeam(game: Game, home: boolean): GameTeamSupabaseNoCreationTime {
             team_id: game.ateamid,
             home: home,
             goals: game.agoals,
-            behinds: game.hbehinds,
+            behinds: game.abehinds,
         }
     }
 }

@@ -134,6 +134,12 @@ CREATE POLICY "Users can delete tips." ON tip FOR DELETE WITH CHECK (auth.uid() 
     SELECT id FROM game WHERE game_started(scheduled) IS NOT TRUE
 ));
 
+CREATE VIEW team_game AS 
+SELECT game.id game_id, team.id team_id
+FROM game
+INNER JOIN game_team ON game.id = game_team.game_id
+INNER JOIN team ON game_team.team_id = team.id;
+
 
 CREATE OR REPLACE FUNCTION calculate_score(side game_team) RETURNS INTEGER AS
 $$

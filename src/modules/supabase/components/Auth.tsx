@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { faGoogle, faGithub, faFacebook } from '@fortawesome/free-brands-svg-icons';
+import { AppConfig } from '../../../common/utils/app.config';
 
 library.add(faGoogle, faGithub, faFacebook);
 
@@ -82,6 +83,8 @@ type SupportedProvider = 'google' | 'github' | 'facebook';
 async function signInWith(provider: Provider) {
     const { user, session, error } = await supabase.auth.signIn({
         provider: provider,
+    }, {
+        redirectTo: AppConfig.redirectUrl,
     })
 }
 

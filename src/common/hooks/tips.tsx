@@ -1,6 +1,6 @@
 import { isFuture, isPast } from 'date-fns';
 import { useState, useEffect } from 'react';
-import { readGames, readRankings } from '../utils/game';
+import { readGames, readHistory, readRankings } from '../utils/game';
 import { Game, gamesSupabaseToGames } from '../utils/objects'
 
 export function useRound(round: number) {
@@ -34,4 +34,19 @@ export function useRanking(round: number) {
     }, [round]);
 
     return rankings;
+}
+
+export function useHistory(teamId: number, round: number) {
+    const [games, setGames] = useState<Game[]>([]);
+
+    useEffect(() => {
+        async function handleHistory() {
+            const data = await readHistory(teamId, round);
+            const newGames = gamesSupabaseToGames(data);
+            setGames(newGames);
+        }
+        handleHistory();
+    }, [teamId, round]);
+
+    return games
 }

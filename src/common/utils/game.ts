@@ -41,5 +41,19 @@ export async function readRankings(round: number) {
             return data as { username: string, wins: number }[]
         }
     }
+}
 
+export async function readHistory(teamId: number, round: number) {
+    // Additional join on View `team_game` so that both teams for each game can be included after filter
+    const { data, error } = await supabase.from('game').select(`
+    id, round_number, round_year, venue, scheduled, team_game!inner(team_id), game_team!inner(home, goals, behinds, team!inner( id, team_name, abbreviation ))
+    `).eq('team_game.team_id', teamId).lt('round_number', round);
+
+    console.log("data fetch")
+
+    if (data !== null) {
+        return (data as gameSupabase[]);
+    } else {
+        throw new Error('No data!');
+    }
 }
