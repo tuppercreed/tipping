@@ -1,6 +1,7 @@
 import { Session } from '@supabase/supabase-js';
 import React, { useEffect, useState } from 'react';
-import { SelectRound, SelectTeam } from '../../common/components/tipping';
+import { SelectRound } from '../../common/components/tipping';
+import { Match } from "../../common/components/match";
 import { useRound } from '../../common/hooks/tips';
 import { AppConfig } from '../../common/utils/app.config';
 import { Game, gamesSupabaseToGames, teamsSupabaseToGames, teamSupabase } from '../../common/utils/objects';
@@ -10,13 +11,7 @@ import { useRouter } from 'next/router';
 import { readGames } from '../../common/utils/game';
 
 
-export function Match(props: { game: Game, games: { [index: number]: Game }, session: Session, round: number }) {
-    return (
-        <div className='m-2 flex flex-col flex-grow justify-center items-stretch'>
-            <SelectTeam session={props.session} homeTeam={props.game.homeTeamObj} awayTeam={props.game.awayTeamObj} game={props.game} games={props.games} handleClick={(team, game) => 1 + 1} round={props.round} />
-        </div>
-    )
-}
+
 
 export async function getStaticPaths() {
     return {
@@ -100,14 +95,10 @@ export default function Round({ teamsSupabase, round }: { teamsSupabase: teamSup
     }, []);
 
     return (
-        <div className='flex flex-col flex-grow'>
+        <div className='flex flex-col flex-grow gap-2 items-stretch'>
             <SelectRound round={round} />
 
-            <br />
-            <br />
-            <hr />
-
-            {!session ? <Auth /> : roundGames.map((game) => <Match game={game} games={games} session={session} round={round} />)}
+            {!session ? <Auth /> : roundGames.map((game) => <Match key={game.game_id} game={game} games={games} session={session} round={round} />)}
 
             <hr />
 
