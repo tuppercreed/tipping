@@ -1,85 +1,85 @@
 import React, { useState } from 'react';
-import { Game, Team } from '../utils/objects';
+import { Data, Game, Team } from '../utils/objects';
 import { Session } from '@supabase/supabase-js';
-import { useSpring, animated, useTransition } from '@react-spring/web';
 import Image, { StaticImageData } from 'next/image'
 import { format } from 'date-fns'
+import { motion, AnimatePresence } from 'framer-motion';
 
-export function Match(props: { game: Game, games: { [index: number]: Game }, session: Session, round: number }) {
+export function Match(props: { content: Data, session: Session, round: number }) {
+    const gameIds = props.content.rounds[props.round].map((match) => match.gameId);
+
+    const [expanded, setExpanded] = useState<false | number>(0);
+
     return (
-        <div className='relative flex-grow'>
-            <SelectTeam session={props.session} homeTeam={props.game.homeTeamObj} awayTeam={props.game.awayTeamObj} game={props.game} games={props.games} handleClick={(team, game) => 1 + 1} round={props.round} />
+        <div className='bg-gradient-to-r from-cyan-500 to-blue-500'>
+            {gameIds.map((gameId) => (
+                <SelectTeam
+                    session={props.session}
+                    expanded={expanded}
+                    setExpanded={setExpanded}
+                    gameId={gameId}
+                    content={props.content}
+                    handleClick={(team, game) => 1 + 1}
+                    round={props.round}
+                />
+            )
+            )}
         </div>
     )
 }
 
-export function SelectTeam(props: { session: Session; homeTeam: Team; awayTeam: Team; game: Game; games: { [index: number]: Game; }; handleClick: (team: Team, game: Game) => void; round: number; }) {
-    const [history, setHistory] = useState(true);
-
-    const transitions = useTransition(history, {
-        from: { opacity: 1, transform: 'translate3d(100%,0,0)' },
-        enter: { opacity: 1, transform: 'translate3d(0%,0,0)' },
-        leave: { opacity: 0, transform: 'translate3d(-50%,0,0)' },
-    });
-
-    const { transform, opacity } = useSpring({
-        opacity: history ? 1 : 0,
-        transform: `perspective(600px) rotateX(${history ? 180 : 0} deg)`,
-        config: { mass: 5, tension: 500, friction: 80 },
-    });
-
-    function handleClick(team: Team, game: Game) {
-        console.log(`Clicked Team: ${team.team_name}`);
-        props.handleClick(team, game);
-    }
+export function SelectTeam(props: { expanded: false | number, setExpanded: React.Dispatch<React.SetStateAction<number | false>>, session: Session; gameId: number, content: Data, handleClick: (team: Team, game: Game) => void, round: number, }) {
+    const isOpen = (props.gameId === props.expanded);
 
     return (
+        <div className='flex flex-col items-center m-2 p-1 md:px-2 tall:py-2 bg-clip-padding backdrop-filter backdrop-blur-xl bg-opacity-60 bg-white border border-gray-200 rounded shadow-md'>
+            <div
+                onClick={() => props.setExpanded(isOpen ? false : props.gameId)}
+                className='grid grid-cols-6 md:grid-cols-7 tall:grid-cols-6 grid-rows-3 md:grid-rows-3 tall:grid-rows-4 gap-2'
+            >
+                <MatchSelector session={props.session} game={props.content.games[props.gameId]} teamClick={props.handleClick} />
+            </div>
 
-        <>
-            {transitions(({ opacity }, item) => item ? (
-                <animated.div
-                    className='flex-grow'
-                    style={{ opacity: opacity.to({ range: [0.0, 1.0], output: [0, 1] }) }}
-                >
-                    <div
-                        onClick={() => setHistory(!history)}
-                        className='bg-gradient-to-r from-indigo-500 to-pink-500 flex flex-col items-center justify-around p-1 md:px-2 tall:py-2'>
-                        <MatchSelector session={props.session} game={props.game} teamClick={props.handleClick} />
-                    </div>
+            <AnimatePresence initial={false}>
+                {isOpen && (
+                    <motion.div
+                        key="content"
+                        initial="collapsed"
+                        animate="open"
+                        exit="collapsed"
+                        variants={{
+                            open: { opacity: 1, height: 'auto', width: 'auto' },
+                            collapsed: { opacity: 0, height: 0, width: 250 }
+                        }}
+                        transition={{ duration: 0.8 }}
+                    >
 
-                </animated.div>
-            ) : (
-                <animated.div
-                    className='top-0 left-0 absolute w-full h-full'
-                    style={{ opacity: opacity.to({ range: [1.0, 0.0], output: [1, 0] }) }}
-                >
-                    <div
-                        onClick={() => setHistory(!history)}
-                        className='bg-gradient-to-r from-indigo-500 to-pink-500 flex flex-row items-center justify-around h-full'>
-                        <CardHistory game={props.game} home={true} games={props.games} historyClick={() => setHistory(!history)} />
-                        <CardHistory game={props.game} home={false} games={props.games} historyClick={() => setHistory(!history)} />
-                    </div>
+                        <div className='separator p-4'>
+                            history
+                        </div>
+                        <div className='grid grid-cols-2 md:grid-cols-7 grid-rows-3'>
+                            <History gameId={props.gameId} content={props.content} />
+                        </div>
 
-                </animated.div>
-            ))}
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
 
-        </>
+        </div>
     );
 }
 
 export function MatchSelector(props: { session: Session, game: Game, teamClick: (team: Team, game: Game) => void }) {
     return (
         <>
-            <div className="flex flex-row flex-wrap gap-4 justify-center items-center m-2">
-                <TeamCard handleClick={props.teamClick} game={props.game} home={true} session={props.session} />
-                <div className='tall:order-3 tall:w-full flex-grow-0'>
-                    <p className='text-neutral-100 text-center'>{props.game.venue}</p>
-                    <p className='text-neutral-100 text-center'>{format(props.game.scheduled, 'p')}</p>
+            <TeamCard handleClick={props.teamClick} game={props.game} home={true} session={props.session} />
+            <div className='row-start-3 md:row-start-2 col-start-3 md:col-start-4 col-span-2 md:col-span-1 tall:row-start-4 tall:col-start-3 tall:col-span-2'>
+                <p className='text-center'>{props.game.venue}</p>
+                <p className='text-center'>{format(props.game.scheduled, 'p')}</p>
 
-                </div>
-                <TeamCard handleClick={props.teamClick} game={props.game} home={false} session={props.session} />
             </div>
+            <TeamCard handleClick={props.teamClick} game={props.game} home={false} session={props.session} />
         </>
     )
 }
@@ -105,80 +105,117 @@ function TeamCard(props: {
 
     let score;
     if (team.score !== undefined && team.score !== null) {
-        score = <p className={`m-1 basis-10 mtall:md:m-2 tall:m-2 text-2xl ${winner ? 'font-bold' : 'font-normal'}`}>{team.score}</p>;
+        score = <p className={`col-span-1 ${props.home ? 'col-start-3 tall:col-start-2' : 'col-start-4 md:col-start-5 tall:col-start-5'} row-start-2 tall:row-start-4 m-1 tall:md:m-2 tall:m-2 text-2xl ${winner ? 'font-bold' : 'font-normal'} text-center`}>{team.score}</p>;
     }
 
     return (
-        <div
-            onClick={(e) => {
-                e.stopPropagation();
-                props.handleClick(team, props.game)
-            }}
-            className={`flex-grow ${tipColor}  rounded-xl bg-white bg-clip-padding backdrop-filter backdrop-blur-xl bg-opacity-60 hoverable:hover:ring-4 ring-gray-200  border-2 mtall:md:border-4 shadow-lg flex flex-row justify-center items-center`}
-        >
-            {!props.home && score}
-            <div className='m-1 w-40 h-40 relative max-w-full flex-grow'>
-                <Image src={logoPath} alt={`Logo of ${team.team_name}`} className='h-auto' layout='fill' objectFit='contain' />
-            </div>
-            {props.home && score}
+        <>
+            {score}
+            <div
+                onClick={(e) => {
+                    e.stopPropagation();
+                    props.handleClick(team, props.game)
+                }}
+                className={`${tipColor} row-span-3 tall:row-span-3 col-span-2 md:col-span-2 tall:col-span-3 ${props.home ? 'col-start-1' : 'col-start-5 md:col-start-6 tall:col-start-4'} flex items-center justify-around hoverable:hover:ring-4 ring-gray-200`}
+            >
+                <div className='w-28 h-28 relative max-w-full'>
+                    <Image src={logoPath} alt={`Logo of ${team.team_name}`} className='h-auto' layout='fill' objectFit='contain' />
+                </div>
 
-        </div>
+            </div>
+        </>
     )
 }
 
-export function CardHistory(props: { game: Game, games: { [index: number]: Game }, home: boolean, historyClick: () => void }) {
-    const focusTeam = props.home ? props.game.homeTeamObj : props.game.awayTeamObj;
+const logoPath = (teamName: string) => {
+    return `/teamLogos/${teamName.replaceAll(' ', '_')}.svg`;
+}
 
-    const logoPath = `/teamLogos/${focusTeam.team_name.replaceAll(' ', '_')}.svg`;
+function History(props: { gameId: number, content: Data }) {
+    const game = props.content.games[props.gameId];
+    const oldRounds: number[] = [];
+    for (let i = game.round.number - 1; i > 0 && i >= game.round.number - 3; i--) {
+        oldRounds.push(i)
+    }
 
-    // Get the previous games filtered by this games team_id
-    //const games = useHistory(focusTeam.team_id, props.game.round.number);
+    const histories = [{ team: game.homeTeamObj, home: true }, { team: game.awayTeamObj, home: false }].map(({ team, home }) => {
+        return (
+            <div className={`row-span-3 row-start-1 col-span-1 md:col-span-3 ${home ? 'col-start-1' : 'col-start-2 md:col-start-5'}  grid grid-cols-6 grid-rows-3 gap-4 `}>
+                <div className={`m-auto ${home ? 'col-start-1' : 'col-start-5'} col-span-2 row-span-3 w-20 h-20 relative max-w-full`}>
+                    <Image src={logoPath(team.team_name)} alt={`Logo of ${team.team_name}`} className='h-auto' layout='fill' objectFit='contain' />
 
-    const games = Object.values(Object.entries(props.games).filter(([gameId, game]) => (game.homeTeamObj.team_id === focusTeam.team_id || game.awayTeamObj.team_id === focusTeam.team_id)));
+                </div>
 
+                <TeamHistory teamId={team.team_id} rounds={oldRounds} content={props.content} left={home} />
+
+            </div>
+        );
+    });
 
     return (
-        <div onClick={props.historyClick} className="flex flex-row items-center rounded-xl bg-white bg-clip-padding backdrop-filter backdrop-blur-xl bg-opacity-60">
-            <div className='m-1 min-w-[10vw] min-h-[15vh] relative max-w-full'>
-                <Image src={logoPath} alt={`Logo of ${focusTeam.team_name}`} className='h-auto' layout='fill' objectFit='contain' />
-            </div>
-            <div className='flex-wrap flex flex-col gap-1 m-3'>
-
-                {games.slice(0, 3).map((game) => {
-                    const focusHome = (game[1].homeTeamObj.team_id === focusTeam.team_id);
-                    return <MatchHistory game={game[1]} focusHome={focusHome} />;
-                })}
-            </div>
-        </div>
+        <>
+            {histories}
+            {oldRounds.map((round) => <p key={round} className='hidden md:block md:col-start-4 text-center m-auto '>Round {round}</p>)}
+        </>
     )
 }
 
-export function MatchHistory(props: { game: Game, focusHome: boolean }) {
-    // focusHome flips the order so that the focus team is always first
+function TeamHistory(props: { teamId: number, rounds: number[], left: boolean, content: Data }) {
+    const lines = props.rounds.filter((round) => {
+        if (props.teamId in props.content.history) {
+            if (round in props.content.history[props.teamId]) {
+                return true;
+            }
+        }
+        return false
+    }).map((round, i) => (
+        <TeamHistoryLine key={props.teamId} teamId={props.teamId} row={i} left={props.left} game={props.content.games[props.content.history[props.teamId][round].gameId]} />
+    ));
+
     return (
-        <div className='flex flex-row gap-1 items-stretch'>
-            <TeamCardHistory game={props.game} focus={true} home={props.focusHome} />
-            <TeamCardHistory game={props.game} focus={false} home={!props.focusHome} />
-        </div>
+        <>
+            {lines}
+        </>
     )
 }
 
-export function TeamCardHistory(props: { game: Game, focus: boolean, home: boolean }) {
-    const team = props.home ? props.game.homeTeamObj : props.game.awayTeamObj;
-    const winner = props.home ? props.game.homeIsWinner() : props.game.awayIsWinner();
+const getHomeOrAwayTeam = (home: boolean, game: Game) => {
+    return home ? game.homeTeamObj : game.awayTeamObj
+}
 
-    const logoPath = `/teamLogos/${team.team_name.replaceAll(' ', '_')}.svg`;
+const getWinner = (home: boolean, game: Game) => {
+    return home ? game.homeIsWinner() : game.awayIsWinner()
+}
 
-    let stripeDir = props.focus ? 'border-l-4' : 'border-r-4';
-    let stripeCol = winner ? 'border-green-500' : 'border-red-500';
+function TeamHistoryLine(props: { teamId: number, game: Game, row: number, left: boolean }) {
+    const focusIsHome = (props.game.homeTeamObj.team_id === props.teamId);
+    const outer = getHomeOrAwayTeam(focusIsHome, props.game);
+    const inner = getHomeOrAwayTeam(!focusIsHome, props.game);
+
+    let rowNum;
+    if (props.row === 0) { rowNum = 'row-start-1' }
+    else if (props.row === 1) { rowNum = 'row-start-2' }
+    else { rowNum = 'row-start-3' }
+
 
     return (
-        <div className={`${props.focus ? 'grow' : 'grow-[2]'} ${stripeDir} ${stripeCol} flex flex-row items-center gap-1 py-4 px-2 basis-10`}>
-            {!props.home && <span className={`basis-8 ${winner ? 'font-bold' : 'font-normal'}`}>{props.game.awayTeamObj.score}</span>}
-            {props.home && <span className={`basis-8 ${winner ? 'font-bold' : 'font-normal'} underline`}>{props.game.homeTeamObj.score}</span>}
-            {!props.focus && <div className='min-w-[5vw] min-h-[5vh] relative max-w-full'>
-                <Image src={logoPath} alt={`Logo of ${team.team_name}`} className='h-auto' layout='fill' objectFit='contain' />
-            </div>}
-        </div>
+        <>
+            <TeamHistoryScore home={focusIsHome} winner={getWinner(focusIsHome, props.game)} left={props.left} row={rowNum} score={outer.score} />
+            <TeamHistoryScore home={!focusIsHome} winner={getWinner(!focusIsHome, props.game)} left={!props.left} row={rowNum} score={inner.score} />
+            <div className={`m-auto w-10 h-10 relative max-w-full ${rowNum} ${props.left ? 'col-start-5' : 'col-start-1'} col-span-2`}>
+                <Image src={logoPath(inner.team_name)} alt={`Logo of ${inner.team_name}`} className='h-auto' layout='fill' objectFit='contain' />
+            </div>
+        </>
+    )
+
+
+}
+
+function TeamHistoryScore(props: { home: boolean, winner: boolean | null | undefined, left: boolean, row: string, score: number | null | undefined }) {
+    const underline = props.home ? 'underline' : 'no-underline';
+    const bold = props.winner ? 'font-bold' : 'font-normal';
+    const col = props.left ? 'col-start-3' : 'col-start-4';
+    return (
+        <span className={`m-auto ${underline} ${bold} ${col} ${props.row}`}>{props.score}</span>
     )
 }

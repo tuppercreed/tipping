@@ -81,50 +81,71 @@ export function gamesSupabaseToGames(gamesApi: gameSupabase[]) {
     return objsSorted;
 }
 
-export function teamsSupabaseToGames(teamsApi: teamSupabase[]) {
+interface History {
+    history: { [teamId: number]: { [roundNumber: number]: { gameId: number } } },
+}
 
-    const reducer = (prev: { [index: number]: gameSupabase }, curr: teamSupabase) => {
-        const teamSimple: teamSupabase = { id: curr.id, team_name: curr.team_name, abbreviation: curr.abbreviation };
-        if (curr.game_team !== undefined) {
-            for (const gameTeamApi of curr.game_team) {
-                let gameTeamSimple = gameTeamApi;
-                gameTeamSimple.team = teamSimple;
-                if (gameTeamSimple.game !== undefined) {
-                    let newGameTeam = { ...gameTeamSimple };
-                    delete newGameTeam.game;
-                    if (gameTeamSimple.game.id in prev) {
-                        prev[gameTeamSimple.game.id].game_team?.push(newGameTeam)
+export interface GamesApi extends History {
+    games: { [gameId: number]: gameSupabase }
+}
+
+export interface Data extends History {
+    games: { [gameId: number]: Game }
+    rounds: { [roundNumber: number]: { gameId: number }[] }
+}
+
+export function teamsApiToGamesApi(teamsApi: teamSupabase[]): GamesApi {
+    let history: { [roundNumber: number]: { [teamId: number]: { gameId: number } } } = {};
+    let games: { [gameId: number]: gameSupabase } = {};
+
+    for (const team of teamsApi) {
+        if (team.game_team !== undefined) {
+            let teamNoGameTeam = { ...team };
+            delete teamNoGameTeam.game_team;
+            for (const gameTeam of team.game_team) {
+                if (gameTeam.game !== undefined) {
+                    let gameTeamNoGame = { ...gameTeam };
+                    delete gameTeamNoGame.game;
+                    gameTeamNoGame.team = teamNoGameTeam;
+                    if (gameTeam.game.id in games) {
+                        if (games[gameTeam.game.id].game_team === undefined) {
+                            games[gameTeam.game.id].game_team = [gameTeamNoGame]
+                        } else {
+                            games[gameTeam.game.id].game_team?.push(gameTeamNoGame)
+                        }
                     } else {
-                        const gameSimple = gameTeamSimple.game;
-                        if (gameSimple.game_team === undefined) {
-                            gameSimple.game_team = [newGameTeam]
-                        }
-                        else {
-                            gameSimple.game_team.push(newGameTeam);
-                        }
-                        prev[gameSimple.id] = gameSimple
+                        games[gameTeam.game.id] = gameTeam.game;
+                        games[gameTeam.game.id].game_team = [gameTeamNoGame]
                     }
-
+                    if (team.id in history) {
+                        history[team.id][gameTeam.game.round_number] = { gameId: gameTeam.game.id }
+                    } else {
+                        history[team.id] = { [gameTeam.game.round_number]: { gameId: gameTeam.game.id } }
+                    }
                 }
             }
         }
-
-        return prev;
-
     }
-
-
-    let gameSupabases = teamsApi.reduce<{ [index: number]: gameSupabase }>(reducer, {});
-
-
-    let games = [];
-    for (const key in gameSupabases) {
-        games.push(new Game(gameSupabases[key]));
-    }
-    let objSorted = games.sort((a, b) => (a.scheduled > b.scheduled) ? 1 : -1);
-
-    return objSorted;
+    return { history, games };
 }
+
+export function ApiToObject(api: GamesApi) {
+    let data: Data = { history: api.history, games: {}, rounds: {} };
+    for (const [gameId, game] of Object.entries(api.games)) {
+        data.games[Number(gameId)] = new Game(game)
+        if (game.round_number in data.rounds) {
+            data.rounds[game.round_number].push({ gameId: Number(gameId) })
+        } else {
+            data.rounds[game.round_number] = [{ gameId: Number(gameId) }]
+        }
+    }
+
+    for (const [roundNumber, games] of Object.entries(data.rounds)) {
+        data.rounds[Number(roundNumber)] = games.sort((a, b) => (data.games[a.gameId].scheduled > data.games[b.gameId].scheduled) ? 1 : -1);
+    }
+    return data;
+}
+
 
 
 export class Game {

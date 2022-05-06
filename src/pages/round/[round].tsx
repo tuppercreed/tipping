@@ -4,7 +4,7 @@ import { SelectRound } from '../../common/components/tipping';
 import { Match } from "../../common/components/match";
 import { useRound } from '../../common/hooks/tips';
 import { AppConfig } from '../../common/utils/app.config';
-import { Game, gamesSupabaseToGames, teamsSupabaseToGames, teamSupabase } from '../../common/utils/objects';
+import { ApiToObject, Data, Game, GamesApi, gamesSupabaseToGames, teamsApiToGamesApi, teamSupabase } from '../../common/utils/objects';
 import { supabase } from '../../modules/supabase/client';
 import Auth from '../../modules/supabase/components/Auth';
 import { useRouter } from 'next/router';
@@ -70,19 +70,17 @@ export async function getStaticProps({ params }: { params: { round: string } }) 
 
     return {
         props: {
-            teamsSupabase: teamsData,
+            gamesApi: teamsApiToGamesApi(teamsData),
             round: round
         }
     }
 }
 
 
-export default function Round({ teamsSupabase, round }: { teamsSupabase: teamSupabase[], round: number }) {
-    let games: Game[] = [];
-    let roundGames: Game[] = [];
-    if (teamsSupabase !== undefined) {
-        games = teamsSupabaseToGames(teamsSupabase);
-        roundGames = games.filter(game => game.round.number === round);
+export default function Round({ gamesApi, round }: { gamesApi: GamesApi, round: number }) {
+    let data;
+    if (gamesApi !== undefined) {
+        data = ApiToObject(gamesApi);
     } else {
         throw new Error("No data received!");
     }
@@ -98,7 +96,7 @@ export default function Round({ teamsSupabase, round }: { teamsSupabase: teamSup
         <div className='flex flex-col flex-grow gap-2 items-stretch'>
             <SelectRound round={round} />
 
-            {!session ? <Auth /> : roundGames.map((game) => <Match key={game.game_id} game={game} games={games} session={session} round={round} />)}
+            {!session ? <Auth /> : <Match content={data} session={session} round={round} />}
 
             <hr />
 
