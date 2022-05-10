@@ -1,10 +1,10 @@
 import { Session } from '@supabase/supabase-js';
 import React, { useEffect, useState } from 'react';
 import { SelectRound } from '../../common/components/tipping';
-import { Match } from "../../common/components/match";
-import { useRound } from '../../common/hooks/tips';
+import { Match, MatchForm } from "../../common/components/match";
+import { useRound, useTips } from '../../common/hooks/tips';
 import { AppConfig } from '../../common/utils/app.config';
-import { ApiToObject, Data, Game, GamesApi, gamesSupabaseToGames, teamsApiToGamesApi, teamSupabase } from '../../common/utils/objects';
+import { ApiToObject, Data, Game, GamesApi, gamesSupabaseToGames, teamsApiToGamesApi, teamSupabase, Tips, tipSupabase, TipToObject } from '../../common/utils/objects';
 import { supabase } from '../../modules/supabase/client';
 import Auth from '../../modules/supabase/components/Auth';
 import { useRouter } from 'next/router';
@@ -45,12 +45,10 @@ export async function getStaticPaths() {
 }
 
 export async function getStaticProps({ params }: { params: { round: string } }) {
-    console.log("Prerendered: ", params.round);
 
     const round = Number(params.round);
 
     const read = async (round: number) => {
-        console.log("Round: ", round);
         const { data, error } = await supabase.from('team').select(`
             id, team_name, abbreviation, 
             game_team!inner(home, goals, behinds, 
@@ -78,14 +76,15 @@ export async function getStaticProps({ params }: { params: { round: string } }) 
 
 
 export default function Round({ gamesApi, round }: { gamesApi: GamesApi, round: number }) {
-    let data;
-    if (gamesApi !== undefined) {
-        data = ApiToObject(gamesApi);
-    } else {
-        throw new Error("No data received!");
+    const data = ApiToObject(gamesApi);
+
+    if (!(round in data.rounds)) {
+        throw new Error("Round data missing");
     }
 
     const [session, setSession] = useState<Session | null>(null);
+
+    const tipsDb = useTips(round, session);
 
     useEffect(() => {
         setSession(supabase.auth.session());
@@ -93,10 +92,10 @@ export default function Round({ gamesApi, round }: { gamesApi: GamesApi, round: 
     }, []);
 
     return (
-        <div className='flex flex-col flex-grow gap-2 items-stretch'>
+        <div className='flex flex-col flex-grow gap-2 items-stretch w-full sm:w-[90vw] md:w-[80vw] lg:w-[70vw] xl:w-[60vw]'>
             <SelectRound round={round} />
 
-            {!session ? <Auth /> : <Match content={data} session={session} round={round} />}
+            {!session ? <Auth /> : <MatchForm content={data} tipsDb={tipsDb} session={session} round={round} />}
 
             <hr />
 

@@ -10,7 +10,7 @@ module.exports = {
       screens: {
         'mtall': { 'raw': '(min-height: 640px)' },
         // => @media (min-height: 768px) { ... }
-        'tall': { 'raw': '(min-height: 1024px)' },
+        'tall': { 'raw': '(min-height: 1024px) and (max-width: 1024px)' },
         // => @media (min-height: 1024px) { ... }
         'hoverable': { 'raw': '(hover: hover)' },
         // => @media (hover: hover) { ... }

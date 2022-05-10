@@ -1,4 +1,4 @@
-import { parseISO } from "date-fns";
+import { formatISO, isAfter, parseISO } from "date-fns";
 
 export interface teamSupabase {
     id: number,
@@ -28,8 +28,10 @@ interface gameTeamSupabase {
     [index: string]: any,
 }
 
-interface tipSupabase {
+export interface tipSupabase {
     person_id: string,
+    game_id: number,
+    team_id: number,
     [index: string]: any,
 }
 
@@ -89,9 +91,16 @@ export interface GamesApi extends History {
     games: { [gameId: number]: gameSupabase }
 }
 
+export interface Tips {
+    [personId: string]: {
+        [gameId: number]: { teamId: number }
+    }
+}
+
 export interface Data extends History {
-    games: { [gameId: number]: Game }
-    rounds: { [roundNumber: number]: { gameId: number }[] }
+    games: { [gameId: number]: Game },
+    rounds: { [roundNumber: number]: { gameId: number }[] },
+    tips?: Tips,
 }
 
 export function teamsApiToGamesApi(teamsApi: teamSupabase[]): GamesApi {
@@ -146,7 +155,26 @@ export function ApiToObject(api: GamesApi) {
     return data;
 }
 
+export function TipToObject(tipsDb: tipSupabase[]) {
+    let tips: Tips = {};
+    for (const tip of tipsDb) {
+        if (tip.person_id in tips) {
+            tips[tip.person_id][tip.game_id] = { teamId: tip.team_id }
+        } else {
+            tips[tip.person_id] = {
+                [tip.game_id]: { teamId: tip.team_id }
+            }
+        }
+    }
+    return tips
+}
 
+export enum MatchResult {
+    Won,
+    Drew,
+    Lost,
+    Unknown,
+}
 
 export class Game {
     game_id: number;
@@ -186,6 +214,21 @@ export class Game {
         return this.awayTeamObj.team_name;
     }
 
+    isWinner(home: boolean) {
+        if (this.homeTeamObj.score === undefined || this.awayTeamObj.score === undefined || this.homeTeamObj.score === null || this.awayTeamObj.score === null) {
+            return MatchResult.Unknown
+        }
+        let [one, two]: (number | null)[] = [null, null]
+        if (home) [one, two] = [this.homeTeamObj.score, this.awayTeamObj.score]
+        else[two, one] = [this.homeTeamObj.score, this.awayTeamObj.score]
+
+        if (one > two) return MatchResult.Won
+        else if (one < two) return MatchResult.Lost
+        else if (one === two) return MatchResult.Drew
+        else throw new Error('Result unclear')
+
+    }
+
     homeIsWinner() {
         if (this.homeTeamObj.score === undefined || this.awayTeamObj.score === undefined) {
             return undefined
@@ -204,5 +247,9 @@ export class Game {
             return null
         }
         return this.awayTeamObj.score > this.homeTeamObj.score
+    }
+
+    started() {
+        return isAfter(new Date(), this.scheduled)
     }
 }
