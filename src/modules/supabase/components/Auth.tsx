@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { Fragment, useEffect, useRef, useState } from 'react';
 import { supabase } from '../client';
 import { ApiError, Provider } from '@supabase/supabase-js';
 import Image from 'next/image';
@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { faGoogle, faGithub, faFacebook } from '@fortawesome/free-brands-svg-icons';
 import { AppConfig } from '../../../common/utils/app.config';
+import { Dialog, Transition } from '@headlessui/react';
 
 library.add(faGoogle, faGithub, faFacebook);
 
@@ -110,7 +111,12 @@ export default function Auth() {
     )
 
     return (
-        <div className="flex flex-col justify-center items-stretch m-2 shadow-md border-2 p-4">
+        <div
+            className={`
+                flex flex-col justify-center items-stretch 
+                m-2 shadow-md border-2 p-4
+                bg-white
+            `}>
 
             {loginMenu}
 
@@ -121,4 +127,50 @@ export default function Auth() {
         </div>
     )
 
+}
+
+
+export function AuthDialog(props: { active: boolean, setActive: React.Dispatch<React.SetStateAction<boolean>> }) {
+    return (
+        <Transition
+            show={props.active}
+            as={Fragment}>
+            <Dialog onClose={() => props.setActive(false)} className='relative z-50'>
+
+                <Transition.Child
+                    as={Fragment}
+                    enter="duration-100 ease-in"
+                    enterFrom="opacity-0"
+                    enterTo="opacity-100"
+                    leave="duration-100 ease-in"
+                    leaveFrom="opacity-100"
+                    leaveTo=" opacity-0"
+                >
+                    <div className='fixed inset-0 bg-black/30' aria-hidden='true' />
+                </Transition.Child>
+
+
+                <Transition.Child
+                    as={Fragment}
+                    enter="duration-100 ease-in-out"
+                    enterFrom="scale-95 opacity-0"
+                    enterTo="scale-100 opacity-100"
+                    leave="duration-100 ease-in-out"
+                    leaveFrom="scale-100 opacity-100"
+                    leaveTo="scale-95 opacity-0"
+                >
+                    <div className='fixed inset-0 flex items-center justify-center p-4'>
+                        <div className='flex min-h-full items-center justify-center'>
+                            <Dialog.Panel className='w-full max-w-sm rounded bg-white p-4'>
+                                <Dialog.Title>Sign in to select your tips</Dialog.Title>
+                                <Auth />
+                            </Dialog.Panel>
+                        </div>
+                    </div>
+                </Transition.Child>
+
+
+            </Dialog>
+        </Transition>
+    )
 }

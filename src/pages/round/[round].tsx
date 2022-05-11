@@ -6,7 +6,7 @@ import { useRound, useTips } from '../../common/hooks/tips';
 import { AppConfig } from '../../common/utils/app.config';
 import { ApiToObject, Data, Game, GamesApi, gamesSupabaseToGames, teamsApiToGamesApi, teamSupabase, Tips, tipSupabase, TipToObject } from '../../common/utils/objects';
 import { supabase } from '../../modules/supabase/client';
-import Auth from '../../modules/supabase/components/Auth';
+import Auth, { AuthDialog, ModalAuth } from '../../modules/supabase/components/Auth';
 import { useRouter } from 'next/router';
 import { readGames } from '../../common/utils/game';
 
@@ -78,10 +78,6 @@ export async function getStaticProps({ params }: { params: { round: string } }) 
 export default function Round({ gamesApi, round }: { gamesApi: GamesApi, round: number }) {
     const data = ApiToObject(gamesApi);
 
-    if (!(round in data.rounds)) {
-        throw new Error("Round data missing");
-    }
-
     const [session, setSession] = useState<Session | null>(null);
 
     const tipsDb = useTips(round, session);
@@ -92,13 +88,15 @@ export default function Round({ gamesApi, round }: { gamesApi: GamesApi, round: 
     }, []);
 
     return (
-        <div className='flex flex-col flex-grow gap-2 items-stretch w-full sm:w-[90vw] md:w-[80vw] lg:w-[70vw] xl:w-[60vw]'>
-            <SelectRound round={round} />
+        <>
+            <div className='mb-2 flex flex-col flex-grow gap-2 items-stretch w-full sm:w-[90vw] md:w-[80vw] lg:w-[70vw] xl:w-[60vw]'>
+                <SelectRound round={round} />
 
-            {!session ? <Auth /> : <MatchForm content={data} tipsDb={tipsDb} session={session} round={round} />}
+                {round in data.rounds && <MatchForm content={data} tipsDb={tipsDb} session={session} round={round} />}
+                {!(round in data.rounds) && <h2 className='text-3xl'>Round Data Missing</h2>}
 
-            <hr />
 
-        </div>
+            </div>
+        </>
     )
 }

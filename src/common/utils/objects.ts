@@ -1,4 +1,4 @@
-import { formatISO, isAfter, parseISO } from "date-fns";
+import { formatISO, isAfter, isBefore, parseISO } from "date-fns";
 
 export interface teamSupabase {
     id: number,
@@ -150,7 +150,12 @@ export function ApiToObject(api: GamesApi) {
     }
 
     for (const [roundNumber, games] of Object.entries(data.rounds)) {
-        data.rounds[Number(roundNumber)] = games.sort((a, b) => (data.games[a.gameId].scheduled > data.games[b.gameId].scheduled) ? 1 : -1);
+        data.rounds[Number(roundNumber)] = games.sort((a, b) => {
+            if (isAfter(data.games[a.gameId].scheduled, data.games[b.gameId].scheduled)) return 1
+            else if (isBefore(data.games[a.gameId].scheduled, data.games[b.gameId].scheduled)) return -1
+            else if (a.gameId > b.gameId) return 1 // If games are at the same time, order by gameId
+            else return -1
+        });
     }
     return data;
 }

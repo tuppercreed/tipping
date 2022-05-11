@@ -7,12 +7,11 @@ import { supabase } from '../modules/supabase/client';
 import Auth from '../modules/supabase/components/Auth';
 
 function Rankings(props: { defaultRound: number, session: Session }) {
-    const [round, setRound] = useState(props.defaultRound);
-    const rankings = useRanking(round);
+    const rankings = useRanking(props.defaultRound);
 
     return (
         <div className='flex flex-col flex-grow'>
-            <SelectRound round={round} handleRound={(newRound: number) => setRound(newRound)} />
+            <SelectRound round={props.defaultRound} />
 
             <ul className='m-2 text-center'>
                 {rankings.map((ranking) => <li key={ranking.username}>{ranking.username} has {ranking.wins} points</li>)}

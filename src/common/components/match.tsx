@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { format } from 'date-fns'
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../modules/supabase/client';
+import { AuthDialog, ModalAuth } from '../../modules/supabase/components/Auth';
 
 function* intersperseDate<X>(a: X[], dates: Date[]) {
     if (a.length !== dates.length) {
@@ -23,22 +24,27 @@ function* intersperseDate<X>(a: X[], dates: Date[]) {
     }
 }
 
-export function MatchForm(props: { content: Data, tipsDb: Tips | null, session: Session, round: number }) {
+export function MatchForm(props: { content: Data, tipsDb: Tips | null, session: Session | null, round: number }) {
     const [submissionError, setSubmissionError] = useState<PostgrestError | undefined | null>(undefined);
 
     async function handleSubmit(event: React.FormEvent<HTMLFormElement>, tips: { teamId: number, gameId: number }[]) {
         event.preventDefault();
 
-        const tipsApi = tips.map(({ teamId, gameId }) => (
-            {
-                person_id: props.session.user!.id,
-                game_id: gameId,
-                team_id: teamId,
-            }
-        ));
+        if (props.session !== null) {
 
-        const { data, error } = await supabase.from('tip').upsert(tipsApi, { returning: 'minimal' });
-        setSubmissionError(error);
+            const tipsApi = tips.map(({ teamId, gameId }) => (
+                {
+                    person_id: props.session!.user!.id,
+                    game_id: gameId,
+                    team_id: teamId,
+                }
+            ));
+
+            const { data, error } = await supabase.from('tip').upsert(tipsApi, { returning: 'minimal' });
+            setSubmissionError(error);
+        } else {
+            throw new Error('Session missing from form submission')
+        }
     }
 
     return (
@@ -63,22 +69,31 @@ const zipTips = (tips: (number | null)[], games: number[]) => {
     return tipsAndGames;
 }
 
-function MatchFormContent(props: { content: Data, tipsDb: Tips | null, session: Session, round: number, handleSubmit: (event: React.FormEvent<HTMLFormElement>, tips: { teamId: number, gameId: number }[]) => void }) {
+function MatchFormContent(props: { content: Data, tipsDb: Tips | null, session: Session | null, round: number, handleSubmit: (event: React.FormEvent<HTMLFormElement>, tips: { teamId: number, gameId: number }[]) => void }) {
     const gameIds = props.content.rounds[props.round].map((match) => match.gameId);
 
     const [tips, setTips] = useState<(number | null)[]>(Array(gameIds.length).fill(null));
+    const [authModal, setAuthModal] = useState(false);
 
     const tipSelect = (i: number, teamId: number) => {
-        const newTips = tips.slice();
-        newTips[i] = teamId;
-        setTips(newTips);
+        if (props.session) {
+            const newTips = tips.slice();
+            newTips[i] = teamId;
+            setTips(newTips);
+        } else {
+            setAuthModal(true);
+        }
     };
 
     return (
-        <form onSubmit={(e) => props.handleSubmit(e, zipTips(tips, gameIds))}>
-            <Match content={props.content} tipsDb={props.tipsDb} session={props.session} round={props.round} tips={tips} handleTip={tipSelect} />
-            <input type='submit' value='Done' className='button' />
-        </form>
+        <>
+            <AuthDialog active={authModal} setActive={setAuthModal} />
+
+            <form onSubmit={(e) => props.handleSubmit(e, zipTips(tips, gameIds))}>
+                <Match content={props.content} tipsDb={props.tipsDb} session={props.session} round={props.round} tips={tips} handleTip={tipSelect} />
+                {props.session && <input type='submit' value='Done' className='button' />}
+            </form>
+        </>
     )
 }
 
@@ -184,16 +199,13 @@ function TeamCard(props: {
 }) {
     const team = props.home ? props.game.homeTeamObj : props.game.awayTeamObj;
 
+
     if (props.game.started()) {
         const winner = props.home ? props.game.homeIsWinner() : props.game.awayIsWinner();
 
-        let score;
-        if (team.score !== undefined && team.score !== null) {
-            score = <p className={`col-span-1 ${props.home ? 'tall:col-start-2 col-start-3' : 'col-start-4 tall:col-start-5 md:col-start-5'} row-start-2 tall:row-start-4 md:row-start-2 m-1 tall:m-2 text-2xl ${winner ? 'font-bold' : 'font-normal'} text-center m-auto`}>{team.score}</p>;
-        }
         return (
             <>
-                {score}
+                {team.score && <p className={`col-span-1 ${props.home ? 'tall:col-start-2 col-start-3' : 'col-start-4 tall:col-start-5 md:col-start-5'} row-start-2 tall:row-start-4 md:row-start-2 m-1 tall:m-2 text-2xl ${winner ? 'font-bold' : 'font-normal'} text-center m-auto`}>{team.score}</p>}
                 <TeamTile team={team} home={props.home} result={props.game.isWinner(props.home)} tipDbId={props.tipDbId} />
             </>
         )
@@ -268,18 +280,16 @@ function TeamTile(props: {
 
 function TeamLogo(props: { size: 'big' | 'small', teamName: string }) {
     let size = '';
-    console.log("Size: ", props.size)
 
     switch (props.size) {
         case 'big':
-            console.log("BIG")
             size = 'w-28 h-28'
             break;
         case 'small':
-            console.log("small")
             size = 'w-10 h-10'
             break;
     }
+
 
     return (
         <div className={`relative max-w-full ${size}`}>
@@ -301,7 +311,7 @@ function History(props: { gameId: number, content: Data }) {
 
     const histories = [{ team: game.homeTeamObj, home: true }, { team: game.awayTeamObj, home: false }].map(({ team, home }) => {
         return (
-            <div className={`row-span-3 row-start-1 col-span-1 md:col-span-3 ${home ? 'col-start-1' : 'col-start-2 md:col-start-5'}  grid grid-cols-6 grid-rows-3 gap-4 `}>
+            <div key={team.team_id} className={`row-span-3 row-start-1 col-span-1 md:col-span-3 ${home ? 'col-start-1' : 'col-start-2 md:col-start-5'}  grid grid-cols-6 grid-rows-3 gap-4 `}>
                 <div className={`m-auto ${home ? 'col-start-1' : 'col-start-5'} col-span-2 row-span-3 w-20 h-20 relative max-w-full`}>
                     <Image src={logoPath(team.team_name)} alt={`Logo of ${team.team_name}`} className='h-auto' layout='fill' objectFit='contain' />
 
@@ -316,7 +326,7 @@ function History(props: { gameId: number, content: Data }) {
     return (
         <>
             {histories}
-            {oldRounds.map((round) => <p key={round} className='hidden md:block md:col-start-4 text-center m-auto '>Round {round}</p>)}
+            {oldRounds.map((round) => <p key={`r${round}`} className='hidden md:block md:col-start-4 text-center m-auto '>Round {round}</p>)}
         </>
     )
 }
@@ -330,7 +340,7 @@ function TeamHistory(props: { teamId: number, rounds: number[], left: boolean, c
         }
         return false
     }).map((round, i) => (
-        <TeamHistoryLine key={props.teamId} teamId={props.teamId} row={i} left={props.left} game={props.content.games[props.content.history[props.teamId][round].gameId]} />
+        <TeamHistoryLine key={round} teamId={props.teamId} row={i} left={props.left} game={props.content.games[props.content.history[props.teamId][round].gameId]} />
     ));
 
     return (
