@@ -1,17 +1,10 @@
 import { Session } from '@supabase/supabase-js';
 import React, { useEffect, useState } from 'react';
 import { SelectRound } from '../../common/components/tipping';
-import { Match, MatchForm } from "../../common/components/match";
-import { useRound, useTips } from '../../common/hooks/tips';
-import { AppConfig } from '../../common/utils/app.config';
-import { ApiToObject, Data, Game, GamesApi, gamesSupabaseToGames, teamsApiToGamesApi, teamSupabase, Tips, tipSupabase, TipToObject } from '../../common/utils/objects';
+import { MatchForm } from "../../common/components/match";
+import { useTips } from '../../common/hooks/tips';
+import { ApiToObject, GamesApi, teamsApiToGamesApi, teamSupabase } from '../../common/utils/objects';
 import { supabase } from '../../modules/supabase/client';
-import Auth, { AuthDialog, ModalAuth } from '../../modules/supabase/components/Auth';
-import { useRouter } from 'next/router';
-import { readGames } from '../../common/utils/game';
-
-
-
 
 export async function getStaticPaths() {
     return {

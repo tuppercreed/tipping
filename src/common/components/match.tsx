@@ -3,9 +3,12 @@ import { Data, Game, MatchResult, Team, Tips } from '../utils/objects';
 import { PostgrestError, Session } from '@supabase/supabase-js';
 import Image from 'next/image'
 import { format } from 'date-fns'
-import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../modules/supabase/client';
-import { AuthDialog, ModalAuth } from '../../modules/supabase/components/Auth';
+import { AuthDialog } from '../../modules/supabase/components/Auth';
+import { useSpring, animated } from '@react-spring/web'
+import { useMeasure } from '../hooks/measure';
+import { faQuestion } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 function* intersperseDate<X>(a: X[], dates: Date[]) {
     if (a.length !== dates.length) {
@@ -134,9 +137,16 @@ export function Match(props: { content: Data, tipsDb: Tips | null, session: Sess
 
 export function SelectTeam(props: { expanded: false | number, setExpanded: React.Dispatch<React.SetStateAction<number | false>>, session: Session | null, gameId: number, tipTeamId: number | null, tipTeamIdDb: number | null, content: Data, handleClick: (teamId: number) => void, round: number, }) {
     const isOpen = (props.gameId === props.expanded);
+    const [ref, height] = useMeasure<HTMLDivElement>();
+
+    const styles = useSpring({
+        from: { height: 0, opacity: 0, transform: 'translateY(20px)' },
+        to: { height: isOpen ? height : 0, opacity: isOpen ? 1 : 0, transform: `translateY(${isOpen ? 0 : 20}px)` }
+    });
+
 
     return (
-        <div className='flex flex-col items-stretch m-2 p-1 md:px-2 tall:py-2 bg-clip-padding backdrop-filter backdrop-blur-xl bg-opacity-40 bg-white rounded shadow-md'>
+        <div className=' flex flex-col items-stretch m-2 p-1 md:px-2 tall:py-2 bg-clip-padding backdrop-filter backdrop-blur-xl bg-opacity-40 bg-white rounded shadow-md'>
             <div
                 onClick={() => props.setExpanded(isOpen ? false : props.gameId)}
                 className='grid grid-cols-6 tall:grid-cols-6 md:grid-cols-7 grid-rows-3 tall:grid-rows-4 md:grid-rows-3 gap-1 md:gap-2 h-32 md:h-40 tall:h-52'
@@ -144,34 +154,21 @@ export function SelectTeam(props: { expanded: false | number, setExpanded: React
                 <MatchSelector session={props.session} game={props.content.games[props.gameId]} tipTeamId={props.tipTeamId} tipTeamIdDb={props.tipTeamIdDb} teamClick={props.handleClick} />
             </div>
 
-            <AnimatePresence initial={false}>
-                {isOpen && (
-                    <motion.div
-                        key="content"
-                        initial="collapsed"
-                        animate="open"
-                        exit="collapsed"
-                        variants={{
-                            open: { opacity: 1, height: 'auto', width: 'auto' },
-                            collapsed: { opacity: 0, height: 0, width: 250 }
-                        }}
-                        transition={{ duration: 0.8 }}
-                        className='self-center'
-                    >
-
-                        <div className='separator p-4'>
-                            history
-                        </div>
-                        <div className='grid grid-cols-2 md:grid-cols-7 grid-rows-3'>
-                            <History gameId={props.gameId} content={props.content} />
-                        </div>
-
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
+            <animated.div style={styles}>
+                <div ref={ref}>
+                    <div className='separator p-4'>
+                        history
+                    </div>
+                    <div className='grid grid-cols-2 md:grid-cols-7 grid-rows-3'>
+                        <History gameId={props.gameId} content={props.content} />
+                    </div>
+                </div>
+            </animated.div>
 
         </div>
+
+
+
     );
 }
 
@@ -387,6 +384,6 @@ function TeamHistoryScore(props: { home: boolean, winner: boolean | null | undef
     const bold = props.winner ? 'font-bold' : 'font-normal';
     const col = props.left ? 'col-start-3' : 'col-start-4';
     return (
-        <span className={`m-auto ${underline} ${bold} ${col} ${props.row}`}>{props.score}</span>
+        <span className={`m-auto ${underline} ${bold} ${col} ${props.row}`}>{props.score ? props.score : <FontAwesomeIcon icon={faQuestion} className='text-rose-600' />}</span>
     )
 }
