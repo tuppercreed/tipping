@@ -24,7 +24,11 @@ html, body, #__next {
         border-color: rgb(243 244 246 / var(--tw-border-opacity));*/
     }
 
-    .button:hover {
+    .button:disabled {
+        background-color: rgb(148 163 184 / var(--tw-bg-opacity));
+    }
+
+    .button:enabled:hover {
         background-color: rgb(29 78 216 / var(--tw-bg-opacity)); 
     }
 

@@ -1,9 +1,10 @@
-import { Session } from '@supabase/supabase-js';
+import { PostgrestError, Session } from '@supabase/supabase-js';
 import { isFuture, isPast } from 'date-fns';
+import { tmpdir } from 'os';
 import { useState, useEffect } from 'react';
 import { supabase } from '../../modules/supabase/client';
 import { readGames, readHistory, readRankings } from '../utils/game';
-import { Game, gamesSupabaseToGames, Tips, tipSupabase, TipToObject } from '../utils/objects'
+import { Game, gamesSupabaseToGames, TipObjectToTipApi, Tips, tipSupabase, TipToObject } from '../utils/objects'
 
 export function useRound(round: number) {
     const [games, setGames] = useState<{ upcoming: Game[], started: Game[] }>({ upcoming: [], started: [] });
@@ -55,9 +56,12 @@ export function useHistory(teamId: number, round: number) {
 
 export function useTips(round: number, session: Session | null) {
     const [tips, setTips] = useState<Tips | null>(null);
+    const [localTips, setLocalTips] = useState<Tips>({});
+    const [upsertError, setUpsertError] = useState<PostgrestError | undefined | null>(undefined);
 
     useEffect(() => {
         async function getTips() {
+            console.log("fetching tips data")
             const { data, error } = await supabase.from('tip').select(`
                 person_id, game_id, team_id, game_team!inner(game!inner(round_year, round_number))
             `).eq('person_id', session?.user!.id).eq('game_team.game.round_year', new Date().getFullYear().toString()).gte('game_team.game.round_number', round - 3).lte('game_team.game.round_number', round);
@@ -73,5 +77,24 @@ export function useTips(round: number, session: Session | null) {
         }
     }, [round, session]);
 
-    return tips
+    useEffect(() => {
+        if (Object.keys(localTips).length === 0) return;
+
+        async function upsertTips() {
+            const { data, error } = await supabase.from('tip').upsert(TipObjectToTipApi(localTips));
+
+            if (data !== null) {
+                for (const [personId, games] of Object.entries(TipToObject(data))) {
+                    setTips({ [personId]: { ...tips?.[personId], ...games } })
+                }
+                setLocalTips({});
+            } else {
+                throw new Error('No tips returned from upsert.');
+            }
+            setUpsertError(error);
+        }
+        if (session !== null) upsertTips();
+    }, [localTips]);
+
+    return { tips, localTips, setLocalTips, upsertError, setUpsertError }
 }

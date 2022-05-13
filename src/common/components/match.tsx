@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Data, Game, MatchResult, Team, Tips } from '../utils/objects';
+import React, { useEffect, useState } from 'react';
+import { Data, Game, MatchResult, Team, Tips, UserTips } from '../utils/objects';
 import { PostgrestError, Session } from '@supabase/supabase-js';
 import Image from 'next/image'
 import { format } from 'date-fns'
@@ -7,8 +7,9 @@ import { supabase } from '../../modules/supabase/client';
 import { AuthDialog } from '../../modules/supabase/components/Auth';
 import { useSpring, animated } from '@react-spring/web'
 import { useMeasure } from '../hooks/measure';
-import { faQuestion } from '@fortawesome/free-solid-svg-icons';
+import { faQuestion, faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useTips } from '../hooks/tips';
 
 function* intersperseDate<X>(a: X[], dates: Date[]) {
     if (a.length !== dates.length) {
@@ -27,90 +28,80 @@ function* intersperseDate<X>(a: X[], dates: Date[]) {
     }
 }
 
-export function MatchForm(props: { content: Data, tipsDb: Tips | null, session: Session | null, round: number }) {
-    const [submissionError, setSubmissionError] = useState<PostgrestError | undefined | null>(undefined);
+export function MatchForm(props: {
+    content: Data,
+    session: Session | null,
+    round: number
+}) {
+    const { tips, localTips, setLocalTips, upsertError, setUpsertError } = useTips(props.round, props.session);
 
-    async function handleSubmit(event: React.FormEvent<HTMLFormElement>, tips: { teamId: number, gameId: number }[]) {
-        event.preventDefault();
+    const [submissionResponse, setSubmissionResponse] = useState(false);
+    const [submissionText, setSubmissionText] = useState('Not yet saved');
 
-        if (props.session !== null) {
 
-            const tipsApi = tips.map(({ teamId, gameId }) => (
-                {
-                    person_id: props.session!.user!.id,
-                    game_id: gameId,
-                    team_id: teamId,
-                }
-            ));
-
-            const { data, error } = await supabase.from('tip').upsert(tipsApi, { returning: 'minimal' });
-            setSubmissionError(error);
-        } else {
-            throw new Error('Session missing from form submission')
-        }
-    }
-
-    return (
-        <>
-            {(submissionError === undefined && <MatchFormContent content={props.content} tipsDb={props.tipsDb} session={props.session} round={props.round} handleSubmit={handleSubmit} />)}
-            {(submissionError !== undefined) && ((submissionError === null) ? <p>Submission success!</p> : <p>Submission failure!</p>)}
-        </>
-    )
-
-}
-
-const zipTips = (tips: (number | null)[], games: number[]) => {
-    if (tips.length !== games.length) {
-        throw new Error('Tips and Games did not have the same length');
-    }
-    let tipsAndGames: { teamId: number, gameId: number }[] = [];
-    for (let i = 0; i < tips.length; i++) {
-        if (tips[i] !== null) {
-            tipsAndGames.push({ gameId: games[i], teamId: tips[i]! })
-        }
-    }
-    return tipsAndGames;
-}
-
-function MatchFormContent(props: { content: Data, tipsDb: Tips | null, session: Session | null, round: number, handleSubmit: (event: React.FormEvent<HTMLFormElement>, tips: { teamId: number, gameId: number }[]) => void }) {
     const gameIds = props.content.rounds[props.round].map((match) => match.gameId);
-
-    const [tips, setTips] = useState<(number | null)[]>(Array(gameIds.length).fill(null));
     const [authModal, setAuthModal] = useState(false);
 
-    const tipSelect = (i: number, teamId: number) => {
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+    }
+
+    const handleTipSelect = (gameId: number, teamId: number) => {
         if (props.session) {
-            const newTips = tips.slice();
-            newTips[i] = teamId;
-            setTips(newTips);
+            // If tip is different from what was already returned from the database, record it as an update
+            if (tips?.[props.session.user!.id]?.[gameId].teamId !== teamId) {
+                setLocalTips({ [props.session.user!.id]: { ...localTips[props.session.user!.id], [gameId]: { teamId } } })
+            }
         } else {
+            // Prompt for login before accepting any tips
             setAuthModal(true);
         }
     };
+
+    useEffect(() => {
+        if (upsertError) setSubmissionText(`Save error: ${upsertError.message}`)
+        else if (upsertError === undefined) setSubmissionText('Not yet saved')
+        else setSubmissionText('Saved')
+
+        if (upsertError !== undefined) setSubmissionResponse(true);
+    }, [upsertError]);
+
+    const submitMsgStyles = useSpring({
+        from: { opacity: 0, transform: 'translateY(-20px)' },
+        to: [
+            { opacity: 1, transform: 'translateY(0px)' },
+            { opacity: 0, transform: 'translateY(-20px)' }
+        ],
+        delay: 400,
+    });
 
     return (
         <>
             <AuthDialog active={authModal} setActive={setAuthModal} />
 
-            <form onSubmit={(e) => props.handleSubmit(e, zipTips(tips, gameIds))}>
-                <Match content={props.content} tipsDb={props.tipsDb} session={props.session} round={props.round} tips={tips} handleTip={tipSelect} />
-                {props.session && <input type='submit' value='Done' className='button' />}
-            </form>
+            <Match content={props.content} tipsDb={localTips?.[props.session?.user?.id ?? '']} session={props.session} round={props.round} tips={tips?.[props.session?.user?.id ?? '']} handleTip={handleTipSelect} />
+            {props.session && <div className='z-50 relative flex flex-row gap-4 items-center'>
+                <animated.p style={submitMsgStyles} className=''>{submissionText}</animated.p>
+            </div>}
         </>
+
     )
+
 }
 
-export function Match(props: { content: Data, tipsDb: Tips | null, session: Session | null, round: number, tips: (number | null)[], handleTip: (i: number, teamId: number) => void }) {
+export function Match(props: {
+    content: Data,
+    tips?: UserTips,
+    tipsDb?: UserTips,
+    session: Session | null,
+    round: number,
+    handleTip: (gameId: number, teamId: number) => void
+}) {
     const gameIds = props.content.rounds[props.round].map((match) => match.gameId);
-
 
     const [expanded, setExpanded] = useState<false | number>(0);
 
-    const gameBoxes = gameIds.map((gameId, i) => {
-        let tipTeamIdDb = null;
-        if (props.session !== null && props.tipsDb !== null && props.session.user!.id in props.tipsDb && gameId in props.tipsDb[props.session.user!.id]) {
-            tipTeamIdDb = props.tipsDb[props.session.user!.id][gameId].teamId;
-        }
+    const gameBoxes = gameIds.map((gameId) => {
 
         return <SelectTeam
             key={gameId}
@@ -118,10 +109,10 @@ export function Match(props: { content: Data, tipsDb: Tips | null, session: Sess
             expanded={expanded}
             setExpanded={setExpanded}
             gameId={gameId}
-            tipTeamId={props.tips[i]}
-            tipTeamIdDb={tipTeamIdDb}
+            tipTeamId={props.tips?.[gameId]?.teamId}
+            tipTeamIdDb={props.tipsDb?.[gameId]?.teamId}
             content={props.content}
-            handleClick={(teamId: number) => props.handleTip(i, teamId)}
+            handleClick={(teamId: number) => props.handleTip(gameId, teamId)}
             round={props.round}
         />;
     })
@@ -135,7 +126,17 @@ export function Match(props: { content: Data, tipsDb: Tips | null, session: Sess
     )
 }
 
-export function SelectTeam(props: { expanded: false | number, setExpanded: React.Dispatch<React.SetStateAction<number | false>>, session: Session | null, gameId: number, tipTeamId: number | null, tipTeamIdDb: number | null, content: Data, handleClick: (teamId: number) => void, round: number, }) {
+export function SelectTeam(props: {
+    expanded: false | number,
+    setExpanded: React.Dispatch<React.SetStateAction<number | false>>,
+    session: Session | null,
+    gameId: number,
+    tipTeamId?: number,
+    tipTeamIdDb?: number,
+    content: Data,
+    handleClick: (teamId: number) => void,
+    round: number,
+}) {
     const isOpen = (props.gameId === props.expanded);
     const [ref, height] = useMeasure<HTMLDivElement>();
 
@@ -144,9 +145,8 @@ export function SelectTeam(props: { expanded: false | number, setExpanded: React
         to: { height: isOpen ? height : 0, opacity: isOpen ? 1 : 0, transform: `translateY(${isOpen ? 0 : 20}px)` }
     });
 
-
     return (
-        <div className=' flex flex-col items-stretch m-2 p-1 md:px-2 tall:py-2 bg-clip-padding backdrop-filter backdrop-blur-xl bg-opacity-40 bg-white rounded shadow-md'>
+        <div className='flex flex-col items-stretch m-2 p-1 md:px-2 tall:py-2 bg-clip-padding backdrop-filter backdrop-blur-xl bg-opacity-40 bg-white rounded shadow-md'>
             <div
                 onClick={() => props.setExpanded(isOpen ? false : props.gameId)}
                 className='grid grid-cols-6 tall:grid-cols-6 md:grid-cols-7 grid-rows-3 tall:grid-rows-4 md:grid-rows-3 gap-1 md:gap-2 h-32 md:h-40 tall:h-52'
@@ -166,13 +166,16 @@ export function SelectTeam(props: { expanded: false | number, setExpanded: React
             </animated.div>
 
         </div>
-
-
-
     );
 }
 
-export function MatchSelector(props: { session: Session | null, game: Game, tipTeamId: number | null, tipTeamIdDb: number | null, teamClick: (teamId: number) => void }) {
+export function MatchSelector(props: {
+    session: Session | null,
+    game: Game,
+    tipTeamId?: number,
+    tipTeamIdDb?: number,
+    teamClick: (teamId: number) => void
+}) {
     return (
         <>
             <TeamCard handleClick={props.teamClick} game={props.game} tipId={props.tipTeamId} tipDbId={props.tipTeamIdDb} home={true} session={props.session} />
@@ -192,17 +195,27 @@ export function MatchSelector(props: { session: Session | null, game: Game, tipT
 }
 
 function TeamCard(props: {
-    session: Session | null, game: Game, tipId: number | null, tipDbId: number | null, home: boolean, handleClick: (teamId: number) => void
+    session: Session | null,
+    game: Game,
+    tipId?: number,
+    tipDbId?: number,
+    home: boolean,
+    handleClick: (teamId: number) => void
 }) {
     const team = props.home ? props.game.homeTeamObj : props.game.awayTeamObj;
-
 
     if (props.game.started()) {
         const winner = props.home ? props.game.homeIsWinner() : props.game.awayIsWinner();
 
         return (
             <>
-                {team.score && <p className={`col-span-1 ${props.home ? 'tall:col-start-2 col-start-3' : 'col-start-4 tall:col-start-5 md:col-start-5'} row-start-2 tall:row-start-4 md:row-start-2 m-1 tall:m-2 text-2xl ${winner ? 'font-bold' : 'font-normal'} text-center m-auto`}>{team.score}</p>}
+                {team.score && <p
+                    className={`col-span-1 
+                        ${props.home ? 'tall:col-start-2 col-start-3' : 'col-start-4 tall:col-start-5 md:col-start-5'} 
+                        row-start-2 tall:row-start-4 md:row-start-2 m-1 tall:m-2 
+                        text-2xl ${winner ? 'font-bold' : 'font-normal'} text-center 
+                        m-auto`}
+                >{team.score}</p>}
                 <TeamTile team={team} home={props.home} result={props.game.isWinner(props.home)} tipDbId={props.tipDbId} />
             </>
         )
@@ -219,8 +232,8 @@ function TeamTile(props: {
     team: Team,
     home: boolean,
     result?: MatchResult,
-    tipId?: number | null,
-    tipDbId?: number | null,
+    tipId?: number,
+    tipDbId?: number,
     handleClick?: (teamId: number) => void
 }) {
     let tipColor = '';

@@ -73,7 +73,6 @@ export default function Round({ gamesApi, round }: { gamesApi: GamesApi, round: 
 
     const [session, setSession] = useState<Session | null>(null);
 
-    const tipsDb = useTips(round, session);
 
     useEffect(() => {
         setSession(supabase.auth.session());
@@ -85,7 +84,7 @@ export default function Round({ gamesApi, round }: { gamesApi: GamesApi, round: 
             <div className='mb-2 flex flex-col flex-grow gap-2 items-stretch w-full sm:w-[90vw] md:w-[80vw] lg:w-[70vw] xl:w-[60vw]'>
                 <SelectRound round={round} />
 
-                {round in data.rounds && <MatchForm content={data} tipsDb={tipsDb} session={session} round={round} />}
+                {round in data.rounds && <MatchForm content={data} session={session} round={round} />}
                 {!(round in data.rounds) && <h2 className='text-3xl'>Round Data Missing</h2>}
 
 

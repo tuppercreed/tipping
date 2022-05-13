@@ -91,10 +91,30 @@ export interface GamesApi extends History {
     games: { [gameId: number]: gameSupabase }
 }
 
+export interface UserTips {
+    [gameId: number]: { teamId: number }
+}
+
 export interface Tips {
-    [personId: string]: {
-        [gameId: number]: { teamId: number }
+    [personId: string]: UserTips
+}
+
+export function TipToObject(tipsDb: tipSupabase[]) {
+    return tipsDb.reduce<Tips>((tips, tipDb) => {
+        if (tipDb.person_id in tips) tips[tipDb.person_id][tipDb.game_id] = { teamId: tipDb.team_id }
+        else tips[tipDb.person_id] = { [tipDb.game_id]: { teamId: tipDb.team_id } }
+        return tips;
+    }, {});
+}
+
+export function TipObjectToTipApi(tips: Tips) {
+    let tipsList: tipSupabase[] = [];
+    for (const [personId, games] of Object.entries(tips)) {
+        for (const [gameId, team] of Object.entries(games)) {
+            tipsList.push({ person_id: personId, game_id: Number(gameId), team_id: team.teamId })
+        }
     }
+    return tipsList;
 }
 
 export interface Data extends History {
@@ -160,19 +180,7 @@ export function ApiToObject(api: GamesApi) {
     return data;
 }
 
-export function TipToObject(tipsDb: tipSupabase[]) {
-    let tips: Tips = {};
-    for (const tip of tipsDb) {
-        if (tip.person_id in tips) {
-            tips[tip.person_id][tip.game_id] = { teamId: tip.team_id }
-        } else {
-            tips[tip.person_id] = {
-                [tip.game_id]: { teamId: tip.team_id }
-            }
-        }
-    }
-    return tips
-}
+
 
 export enum MatchResult {
     Won,
