@@ -28,6 +28,10 @@ function* intersperseDate<X>(a: X[], dates: Date[]) {
     }
 }
 
+const logoPath = (teamName: string) => {
+    return `/teamLogos/${teamName.replaceAll(' ', '_')}.svg`;
+}
+
 export function MatchForm(props: {
     content: Data,
     session: Session | null,
@@ -308,9 +312,7 @@ function TeamLogo(props: { size: 'big' | 'small', teamName: string }) {
     )
 }
 
-const logoPath = (teamName: string) => {
-    return `/teamLogos/${teamName.replaceAll(' ', '_')}.svg`;
-}
+
 
 function History(props: { gameId: number, content: Data }) {
     const game = props.content.games[props.gameId];
