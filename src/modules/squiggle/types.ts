@@ -51,6 +51,37 @@ export type Standing = {
     rank: number,
 }
 
+export type Source = {
+    url: string,
+    icon: string,
+    id: number,
+    name: string,
+}
+
+export type Tip = {
+    year: number,
+    round: number,
+    gameid: number,
+    date: string,
+    venue: string,
+    source: string,
+    sourceid: number,
+    updated: string,
+    hteam: number,
+    hteamid: number,
+    ateam: string,
+    ateamid: number,
+    tip: string,
+    tipteamid: number,
+    confidence: string,
+    margin: string,
+    hconfidence: string,
+    hmargin: string,
+    bits: string,
+    err: string,
+    correct: number,
+}
+
 export type PlayerApproximateValue = {
     mPAV_mid: string,
     PAV_def: string,
@@ -72,9 +103,13 @@ export type PlayerApproximateValue = {
     surname: string,
 }
 
-export type SquiggleResponse = {
+export type SquiggleResponse = Team | Game | Standing | PlayerApproximateValue | Source | Tip;
+
+export type SquiggleAnyResponse = {
     teams?: Team[];
     games?: Game[];
     standings?: Standing[];
     pav?: PlayerApproximateValue[];
+    sources?: Source[];
+    tips?: Tip[];
 }

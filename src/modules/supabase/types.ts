@@ -114,6 +114,105 @@ export interface paths {
       };
     };
   };
+  "/competition_rankings_summary": {
+    get: {
+      parameters: {
+        query: {
+          round_year?: parameters["rowFilter.competition_rankings_summary.round_year"];
+          round_number?: parameters["rowFilter.competition_rankings_summary.round_number"];
+          person_id?: parameters["rowFilter.competition_rankings_summary.person_id"];
+          wins?: parameters["rowFilter.competition_rankings_summary.wins"];
+          updated_at?: parameters["rowFilter.competition_rankings_summary.updated_at"];
+          /** Filtering Columns */
+          select?: parameters["select"];
+          /** Ordering */
+          order?: parameters["order"];
+          /** Limiting and Pagination */
+          offset?: parameters["offset"];
+          /** Limiting and Pagination */
+          limit?: parameters["limit"];
+        };
+        header: {
+          /** Limiting and Pagination */
+          Range?: parameters["range"];
+          /** Limiting and Pagination */
+          "Range-Unit"?: parameters["rangeUnit"];
+          /** Preference */
+          Prefer?: parameters["preferCount"];
+        };
+      };
+      responses: {
+        /** OK */
+        200: {
+          schema: definitions["competition_rankings_summary"][];
+        };
+        /** Partial Content */
+        206: unknown;
+      };
+    };
+    post: {
+      parameters: {
+        body: {
+          /** competition_rankings_summary */
+          competition_rankings_summary?: definitions["competition_rankings_summary"];
+        };
+        query: {
+          /** Filtering Columns */
+          select?: parameters["select"];
+        };
+        header: {
+          /** Preference */
+          Prefer?: parameters["preferReturn"];
+        };
+      };
+      responses: {
+        /** Created */
+        201: unknown;
+      };
+    };
+    delete: {
+      parameters: {
+        query: {
+          round_year?: parameters["rowFilter.competition_rankings_summary.round_year"];
+          round_number?: parameters["rowFilter.competition_rankings_summary.round_number"];
+          person_id?: parameters["rowFilter.competition_rankings_summary.person_id"];
+          wins?: parameters["rowFilter.competition_rankings_summary.wins"];
+          updated_at?: parameters["rowFilter.competition_rankings_summary.updated_at"];
+        };
+        header: {
+          /** Preference */
+          Prefer?: parameters["preferReturn"];
+        };
+      };
+      responses: {
+        /** No Content */
+        204: never;
+      };
+    };
+    patch: {
+      parameters: {
+        query: {
+          round_year?: parameters["rowFilter.competition_rankings_summary.round_year"];
+          round_number?: parameters["rowFilter.competition_rankings_summary.round_number"];
+          person_id?: parameters["rowFilter.competition_rankings_summary.person_id"];
+          wins?: parameters["rowFilter.competition_rankings_summary.wins"];
+          updated_at?: parameters["rowFilter.competition_rankings_summary.updated_at"];
+        };
+        body: {
+          /** competition_rankings_summary */
+          competition_rankings_summary?: definitions["competition_rankings_summary"];
+        };
+        header: {
+          /** Preference */
+          Prefer?: parameters["preferReturn"];
+        };
+      };
+      responses: {
+        /** No Content */
+        204: never;
+      };
+    };
+  };
   "/competitions_persons": {
     get: {
       parameters: {
@@ -519,6 +618,198 @@ export interface paths {
       };
     };
   };
+  "/prediction": {
+    get: {
+      parameters: {
+        query: {
+          game_id?: parameters["rowFilter.prediction.game_id"];
+          team_id?: parameters["rowFilter.prediction.team_id"];
+          predictor_id?: parameters["rowFilter.prediction.predictor_id"];
+          win?: parameters["rowFilter.prediction.win"];
+          confidence?: parameters["rowFilter.prediction.confidence"];
+          /** Filtering Columns */
+          select?: parameters["select"];
+          /** Ordering */
+          order?: parameters["order"];
+          /** Limiting and Pagination */
+          offset?: parameters["offset"];
+          /** Limiting and Pagination */
+          limit?: parameters["limit"];
+        };
+        header: {
+          /** Limiting and Pagination */
+          Range?: parameters["range"];
+          /** Limiting and Pagination */
+          "Range-Unit"?: parameters["rangeUnit"];
+          /** Preference */
+          Prefer?: parameters["preferCount"];
+        };
+      };
+      responses: {
+        /** OK */
+        200: {
+          schema: definitions["prediction"][];
+        };
+        /** Partial Content */
+        206: unknown;
+      };
+    };
+    post: {
+      parameters: {
+        body: {
+          /** prediction */
+          prediction?: definitions["prediction"];
+        };
+        query: {
+          /** Filtering Columns */
+          select?: parameters["select"];
+        };
+        header: {
+          /** Preference */
+          Prefer?: parameters["preferReturn"];
+        };
+      };
+      responses: {
+        /** Created */
+        201: unknown;
+      };
+    };
+    delete: {
+      parameters: {
+        query: {
+          game_id?: parameters["rowFilter.prediction.game_id"];
+          team_id?: parameters["rowFilter.prediction.team_id"];
+          predictor_id?: parameters["rowFilter.prediction.predictor_id"];
+          win?: parameters["rowFilter.prediction.win"];
+          confidence?: parameters["rowFilter.prediction.confidence"];
+        };
+        header: {
+          /** Preference */
+          Prefer?: parameters["preferReturn"];
+        };
+      };
+      responses: {
+        /** No Content */
+        204: never;
+      };
+    };
+    patch: {
+      parameters: {
+        query: {
+          game_id?: parameters["rowFilter.prediction.game_id"];
+          team_id?: parameters["rowFilter.prediction.team_id"];
+          predictor_id?: parameters["rowFilter.prediction.predictor_id"];
+          win?: parameters["rowFilter.prediction.win"];
+          confidence?: parameters["rowFilter.prediction.confidence"];
+        };
+        body: {
+          /** prediction */
+          prediction?: definitions["prediction"];
+        };
+        header: {
+          /** Preference */
+          Prefer?: parameters["preferReturn"];
+        };
+      };
+      responses: {
+        /** No Content */
+        204: never;
+      };
+    };
+  };
+  "/predictor": {
+    get: {
+      parameters: {
+        query: {
+          id?: parameters["rowFilter.predictor.id"];
+          predictor_name?: parameters["rowFilter.predictor.predictor_name"];
+          predictor_url?: parameters["rowFilter.predictor.predictor_url"];
+          /** Filtering Columns */
+          select?: parameters["select"];
+          /** Ordering */
+          order?: parameters["order"];
+          /** Limiting and Pagination */
+          offset?: parameters["offset"];
+          /** Limiting and Pagination */
+          limit?: parameters["limit"];
+        };
+        header: {
+          /** Limiting and Pagination */
+          Range?: parameters["range"];
+          /** Limiting and Pagination */
+          "Range-Unit"?: parameters["rangeUnit"];
+          /** Preference */
+          Prefer?: parameters["preferCount"];
+        };
+      };
+      responses: {
+        /** OK */
+        200: {
+          schema: definitions["predictor"][];
+        };
+        /** Partial Content */
+        206: unknown;
+      };
+    };
+    post: {
+      parameters: {
+        body: {
+          /** predictor */
+          predictor?: definitions["predictor"];
+        };
+        query: {
+          /** Filtering Columns */
+          select?: parameters["select"];
+        };
+        header: {
+          /** Preference */
+          Prefer?: parameters["preferReturn"];
+        };
+      };
+      responses: {
+        /** Created */
+        201: unknown;
+      };
+    };
+    delete: {
+      parameters: {
+        query: {
+          id?: parameters["rowFilter.predictor.id"];
+          predictor_name?: parameters["rowFilter.predictor.predictor_name"];
+          predictor_url?: parameters["rowFilter.predictor.predictor_url"];
+        };
+        header: {
+          /** Preference */
+          Prefer?: parameters["preferReturn"];
+        };
+      };
+      responses: {
+        /** No Content */
+        204: never;
+      };
+    };
+    patch: {
+      parameters: {
+        query: {
+          id?: parameters["rowFilter.predictor.id"];
+          predictor_name?: parameters["rowFilter.predictor.predictor_name"];
+          predictor_url?: parameters["rowFilter.predictor.predictor_url"];
+        };
+        body: {
+          /** predictor */
+          predictor?: definitions["predictor"];
+        };
+        header: {
+          /** Preference */
+          Prefer?: parameters["preferReturn"];
+        };
+      };
+      responses: {
+        /** No Content */
+        204: never;
+      };
+    };
+  };
   "/team": {
     get: {
       parameters: {
@@ -526,6 +817,8 @@ export interface paths {
           id?: parameters["rowFilter.team.id"];
           team_name?: parameters["rowFilter.team.team_name"];
           abbreviation?: parameters["rowFilter.team.abbreviation"];
+          standing?: parameters["rowFilter.team.standing"];
+          updated_at?: parameters["rowFilter.team.updated_at"];
           /** Filtering Columns */
           select?: parameters["select"];
           /** Ordering */
@@ -579,6 +872,8 @@ export interface paths {
           id?: parameters["rowFilter.team.id"];
           team_name?: parameters["rowFilter.team.team_name"];
           abbreviation?: parameters["rowFilter.team.abbreviation"];
+          standing?: parameters["rowFilter.team.standing"];
+          updated_at?: parameters["rowFilter.team.updated_at"];
         };
         header: {
           /** Preference */
@@ -596,6 +891,8 @@ export interface paths {
           id?: parameters["rowFilter.team.id"];
           team_name?: parameters["rowFilter.team.team_name"];
           abbreviation?: parameters["rowFilter.team.abbreviation"];
+          standing?: parameters["rowFilter.team.standing"];
+          updated_at?: parameters["rowFilter.team.updated_at"];
         };
         body: {
           /** team */
@@ -609,6 +906,40 @@ export interface paths {
       responses: {
         /** No Content */
         204: never;
+      };
+    };
+  };
+  "/team_game": {
+    get: {
+      parameters: {
+        query: {
+          game_id?: parameters["rowFilter.team_game.game_id"];
+          team_id?: parameters["rowFilter.team_game.team_id"];
+          /** Filtering Columns */
+          select?: parameters["select"];
+          /** Ordering */
+          order?: parameters["order"];
+          /** Limiting and Pagination */
+          offset?: parameters["offset"];
+          /** Limiting and Pagination */
+          limit?: parameters["limit"];
+        };
+        header: {
+          /** Limiting and Pagination */
+          Range?: parameters["range"];
+          /** Limiting and Pagination */
+          "Range-Unit"?: parameters["rangeUnit"];
+          /** Preference */
+          Prefer?: parameters["preferCount"];
+        };
+      };
+      responses: {
+        /** OK */
+        200: {
+          schema: definitions["team_game"][];
+        };
+        /** Partial Content */
+        206: unknown;
       };
     };
   };
@@ -798,6 +1129,154 @@ export interface paths {
       };
     };
   };
+  "/rpc/all_rankings": {
+    post: {
+      parameters: {
+        body: {
+          args: {
+            /** Format: integer */
+            r_year: number;
+          };
+        };
+        header: {
+          /** Preference */
+          Prefer?: parameters["preferParams"];
+        };
+      };
+      responses: {
+        /** OK */
+        200: unknown;
+      };
+    };
+  };
+  "/rpc/calculate_score": {
+    post: {
+      parameters: {
+        body: {
+          args: {
+            /** Format: public.game_team */
+            side: string;
+          };
+        };
+        header: {
+          /** Preference */
+          Prefer?: parameters["preferParams"];
+        };
+      };
+      responses: {
+        /** OK */
+        200: unknown;
+      };
+    };
+  };
+  "/rpc/round_rankings": {
+    post: {
+      parameters: {
+        body: {
+          args: {
+            /** Format: integer */
+            r_year: number;
+            /** Format: integer */
+            r_number: number;
+          };
+        };
+        header: {
+          /** Preference */
+          Prefer?: parameters["preferParams"];
+        };
+      };
+      responses: {
+        /** OK */
+        200: unknown;
+      };
+    };
+  };
+  "/rpc/talk_to_kanye": {
+    post: {
+      parameters: {
+        body: {
+          args: {
+            /** Format: text */
+            name: string;
+          };
+        };
+        header: {
+          /** Preference */
+          Prefer?: parameters["preferParams"];
+        };
+      };
+      responses: {
+        /** OK */
+        200: unknown;
+      };
+    };
+  };
+  "/rpc/competition_rankings": {
+    post: {
+      parameters: {
+        body: {
+          args: {
+            /** Format: integer */
+            comp_id: number;
+            /** Format: integer */
+            r_year: number;
+          };
+        };
+        header: {
+          /** Preference */
+          Prefer?: parameters["preferParams"];
+        };
+      };
+      responses: {
+        /** OK */
+        200: unknown;
+      };
+    };
+  };
+  "/rpc/calculate_winner": {
+    post: {
+      parameters: {
+        body: {
+          args: {
+            /** Format: public.game_team */
+            away: string;
+            /** Format: public.game_team */
+            home: string;
+          };
+        };
+        header: {
+          /** Preference */
+          Prefer?: parameters["preferParams"];
+        };
+      };
+      responses: {
+        /** OK */
+        200: unknown;
+      };
+    };
+  };
+  "/rpc/scores": {
+    post: {
+      parameters: {
+        body: {
+          args: {
+            /** Format: integer */
+            r_year: number;
+            /** Format: integer */
+            r_number: number;
+          };
+        };
+        header: {
+          /** Preference */
+          Prefer?: parameters["preferParams"];
+        };
+      };
+      responses: {
+        /** OK */
+        200: unknown;
+      };
+    };
+  };
   "/rpc/game_started": {
     post: {
       parameters: {
@@ -805,6 +1284,30 @@ export interface paths {
           args: {
             /** Format: timestamp without time zone */
             scheduled: string;
+          };
+        };
+        header: {
+          /** Preference */
+          Prefer?: parameters["preferParams"];
+        };
+      };
+      responses: {
+        /** OK */
+        200: unknown;
+      };
+    };
+  };
+  "/rpc/competition_rankings_round": {
+    post: {
+      parameters: {
+        body: {
+          args: {
+            /** Format: integer */
+            comp_id: number;
+            /** Format: integer */
+            r_year: number;
+            /** Format: integer */
+            r_number: number;
           };
         };
         header: {
@@ -841,6 +1344,34 @@ export interface definitions {
      * @default CURRENT_TIMESTAMP
      */
     created_at: string;
+  };
+  competition_rankings_summary: {
+    /**
+     * Format: integer
+     * @description Note:
+     * This is a Primary Key.<pk/>
+     */
+    round_year: number;
+    /**
+     * Format: integer
+     * @description Note:
+     * This is a Primary Key.<pk/>
+     */
+    round_number: number;
+    /**
+     * Format: uuid
+     * @description Note:
+     * This is a Primary Key.<pk/>
+     * This is a Foreign Key to `person.id`.<fk table='person' column='id'/>
+     */
+    person_id: string;
+    /** Format: integer */
+    wins?: number;
+    /**
+     * Format: timestamp without time zone
+     * @default CURRENT_TIMESTAMP
+     */
+    updated_at: string;
   };
   competitions_persons: {
     /**
@@ -939,6 +1470,43 @@ export interface definitions {
     /** Format: timestamp without time zone */
     updated_at: string;
   };
+  prediction: {
+    /**
+     * Format: integer
+     * @description Note:
+     * This is a Primary Key.<pk/>
+     */
+    game_id: number;
+    /**
+     * Format: integer
+     * @description Note:
+     * This is a Primary Key.<pk/>
+     */
+    team_id: number;
+    /**
+     * Format: integer
+     * @description Note:
+     * This is a Primary Key.<pk/>
+     * This is a Foreign Key to `predictor.id`.<fk table='predictor' column='id'/>
+     */
+    predictor_id: number;
+    /** Format: boolean */
+    win?: boolean;
+    /** Format: double precision */
+    confidence?: number;
+  };
+  predictor: {
+    /**
+     * Format: integer
+     * @description Note:
+     * This is a Primary Key.<pk/>
+     */
+    id: number;
+    /** Format: text */
+    predictor_name: string;
+    /** Format: text */
+    predictor_url?: string;
+  };
   team: {
     /**
      * Format: integer
@@ -950,6 +1518,27 @@ export interface definitions {
     team_name: string;
     /** Format: text */
     abbreviation?: string;
+    /** Format: jsonb */
+    standing?: string;
+    /**
+     * Format: timestamp without time zone
+     * @default CURRENT_TIMESTAMP
+     */
+    updated_at: string;
+  };
+  team_game: {
+    /**
+     * Format: integer
+     * @description Note:
+     * This is a Primary Key.<pk/>
+     */
+    game_id?: number;
+    /**
+     * Format: integer
+     * @description Note:
+     * This is a Primary Key.<pk/>
+     */
+    team_id?: number;
   };
   tip: {
     /**
@@ -1033,6 +1622,18 @@ export interface parameters {
   "rowFilter.competition.time_zone": string;
   /** Format: timestamp without time zone */
   "rowFilter.competition.created_at": string;
+  /** @description competition_rankings_summary */
+  "body.competition_rankings_summary": definitions["competition_rankings_summary"];
+  /** Format: integer */
+  "rowFilter.competition_rankings_summary.round_year": string;
+  /** Format: integer */
+  "rowFilter.competition_rankings_summary.round_number": string;
+  /** Format: uuid */
+  "rowFilter.competition_rankings_summary.person_id": string;
+  /** Format: integer */
+  "rowFilter.competition_rankings_summary.wins": string;
+  /** Format: timestamp without time zone */
+  "rowFilter.competition_rankings_summary.updated_at": string;
   /** @description competitions_persons */
   "body.competitions_persons": definitions["competitions_persons"];
   /** Format: integer */
@@ -1087,6 +1688,26 @@ export interface parameters {
   "rowFilter.person.created_at": string;
   /** Format: timestamp without time zone */
   "rowFilter.person.updated_at": string;
+  /** @description prediction */
+  "body.prediction": definitions["prediction"];
+  /** Format: integer */
+  "rowFilter.prediction.game_id": string;
+  /** Format: integer */
+  "rowFilter.prediction.team_id": string;
+  /** Format: integer */
+  "rowFilter.prediction.predictor_id": string;
+  /** Format: boolean */
+  "rowFilter.prediction.win": string;
+  /** Format: double precision */
+  "rowFilter.prediction.confidence": string;
+  /** @description predictor */
+  "body.predictor": definitions["predictor"];
+  /** Format: integer */
+  "rowFilter.predictor.id": string;
+  /** Format: text */
+  "rowFilter.predictor.predictor_name": string;
+  /** Format: text */
+  "rowFilter.predictor.predictor_url": string;
   /** @description team */
   "body.team": definitions["team"];
   /** Format: integer */
@@ -1095,6 +1716,16 @@ export interface parameters {
   "rowFilter.team.team_name": string;
   /** Format: text */
   "rowFilter.team.abbreviation": string;
+  /** Format: jsonb */
+  "rowFilter.team.standing": string;
+  /** Format: timestamp without time zone */
+  "rowFilter.team.updated_at": string;
+  /** @description team_game */
+  "body.team_game": definitions["team_game"];
+  /** Format: integer */
+  "rowFilter.team_game.game_id": string;
+  /** Format: integer */
+  "rowFilter.team_game.team_id": string;
   /** @description tip */
   "body.tip": definitions["tip"];
   /** Format: uuid */

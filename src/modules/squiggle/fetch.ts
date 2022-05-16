@@ -1,8 +1,8 @@
 import { AppConfig } from '../../common/utils/app.config'
 
-import { SquiggleResponse } from './types';
+import { SquiggleAnyResponse } from './types';
 
-const fetcher = async (args: string): Promise<SquiggleResponse> => {
+const fetcher = async (args: string): Promise<SquiggleAnyResponse> => {
     const url = `${AppConfig.aflEndpoint}?q=${args}`;
     const headers = new Headers({
         "Accept": "application/json",
@@ -14,7 +14,18 @@ const fetcher = async (args: string): Promise<SquiggleResponse> => {
         return json;
     }
     return Promise.reject(res)
+}
 
+type Query = 'teams' | 'games' | 'sources' | 'tips' | 'standings' | 'pav';
+
+export const fetchConstructor = async (q: Query, args: { [arg: string]: any }) => {
+    let combined = `${q}`;
+    for (const [arg, val] of Object.entries(args)) {
+        combined.concat(`;${arg}=${val}`);
+    }
+    const res = await fetcher(combined);
+    if (q in res) return res[q]
+    else throw new Error(`No ${q} returned by Squiggle API`);
 }
 
 export async function fetchTeams() {
@@ -48,4 +59,3 @@ export async function fetchPlayerApproximateValue(teamId: number) {
     }
     throw new Error('No PlayerApproximateValues returned');
 }
-

@@ -1,6 +1,7 @@
 import { GetStaticProps } from 'next';
 import React from 'react';
 import { AppConfig } from '../common/utils/app.config';
+import { Standing } from '../common/utils/data';
 import { gamesSupabaseToGames } from '../common/utils/objects';
 import { fetchGames, fetchTeams } from '../modules/squiggle/fetch';
 import { updateGames, updateTeams } from '../modules/squiggle/toSupabase';
@@ -13,6 +14,10 @@ export const getStaticProps: GetStaticProps = async () => {
         updateTeams(teams);
         let games = await fetchGames(AppConfig.round);
         updateGames(games);
+
+        let standings = new Standing(AppConfig.round);
+        standings.update();
+
         return { props: { games: games } }
     }
     return { props: { games: [] } }

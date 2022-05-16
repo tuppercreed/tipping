@@ -1,4 +1,4 @@
-import { Team, Game, Standing, PlayerApproximateValue, SquiggleResponse } from './types';
+import { Team, Game, Standing, Tip, PlayerApproximateValue, SquiggleAnyResponse, Source } from './types';
 import { definitions } from '../supabase/types';
 import { parseISO } from 'date-fns';
 import { supabase } from '../supabase/client'
@@ -7,7 +7,9 @@ type CompetitionSupabase = definitions['competition'];
 type TeamSupabase = definitions['team'];
 type GameSupabase = definitions['game'];
 type GameTeamSupabase = definitions['game_team'];
-type TournamentRoundSupaBase = definitions['tournament_round'];
+type TournamentRoundSupabase = definitions['tournament_round'];
+type PredictorSupabase = definitions['predictor'];
+type PredictionSupabase = definitions['prediction'];
 
 type GameTeamSupabaseNoCreationTime = {
     game_id: number,
@@ -26,7 +28,14 @@ type GameSupabaseNoCreationTime = {
     complete: boolean,
 }
 
-function toTeam(team: Team): TeamSupabase {
+type TeamSupabaseNoTime = {
+    id: number,
+    team_name: string,
+    abbreviation?: string,
+    standing?: string,
+}
+
+function toTeam(team: Team): TeamSupabaseNoTime {
     return {
         id: team.id,
         team_name: team.name,
@@ -34,7 +43,7 @@ function toTeam(team: Team): TeamSupabase {
     }
 }
 
-async function upsertTeams(teams: TeamSupabase[]) {
+async function upsertTeams(teams: TeamSupabaseNoTime[]) {
     const { data, error } = await supabase.from('team').upsert(
         teams, { returning: "minimal", ignoreDuplicates: true }
     )
@@ -88,7 +97,7 @@ function toGameTeamHomeAway(game: Game): GameTeamSupabaseNoCreationTime[] {
     return [toGameTeam(game, true), toGameTeam(game, false)]
 }
 
-function toTournamentRound(game: Game): TournamentRoundSupaBase {
+function toTournamentRound(game: Game): TournamentRoundSupabase {
     return {
         round_year: game.year,
         round_number: game.round,
@@ -96,7 +105,7 @@ function toTournamentRound(game: Game): TournamentRoundSupaBase {
     }
 }
 
-async function upsertTournamentRounds(rounds: TournamentRoundSupaBase[]) {
+async function upsertTournamentRounds(rounds: TournamentRoundSupabase[]) {
     const { data, error } = await supabase.from('tournament_round').upsert(rounds, { returning: 'minimal', ignoreDuplicates: true })
 }
 
@@ -117,3 +126,40 @@ export function updateGames(games: Game[]) {
 
     upsertGameTeams(game_teams_flat);
 }
+
+
+function toPredictor(source: Source): PredictorSupabase {
+    return {
+        id: source.id,
+        predictor_name: source.name,
+        predictor_url: source.url,
+    }
+}
+
+async function upsertPredictors(predictor: PredictorSupabase[]) {
+    const { data, error } = await supabase.from('predictor').upsert(predictor, { returning: 'minimal', ignoreDuplicates: true })
+}
+
+function toPrediction(tip: Tip): [PredictionSupabase, PredictionSupabase] {
+    return ([
+        {
+            game_id: tip.gameid,
+            team_id: tip.hteamid,
+            predictor_id: tip.sourceid,
+            win: (tip.tipteamid === tip.hteamid),
+            confidence: parseFloat(tip.hconfidence)
+        },
+        {
+            game_id: tip.gameid,
+            team_id: tip.ateamid,
+            predictor_id: tip.sourceid,
+            win: (tip.tipteamid === tip.ateamid),
+            confidence: 100 - parseFloat(tip.hconfidence),
+        }
+    ])
+}
+
+async function upsertPredictions(predictions: PredictionSupabase[]) {
+    const { data, error } = await supabase.from('prediction').upsert(predictions, { returning: 'minimal', ignoreDuplicates: true })
+}
+
