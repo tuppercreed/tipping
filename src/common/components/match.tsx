@@ -116,7 +116,7 @@ export function Match(props: {
             tipTeamId={props.tips?.[gameId]?.teamId}
             tipTeamIdDb={props.tipsDb?.[gameId]?.teamId}
             content={props.content}
-            handleClick={(teamId: number) => props.handleTip(gameId, teamId)}
+            handleClick={props.handleTip}
             round={props.round}
         />;
     })
@@ -138,7 +138,7 @@ export function SelectTeam(props: {
     tipTeamId?: number,
     tipTeamIdDb?: number,
     content: Data,
-    handleClick: (teamId: number) => void,
+    handleClick: (gameId: number, teamId: number) => void,
     round: number,
 }) {
     const isOpen = (props.gameId === props.expanded);
@@ -178,7 +178,7 @@ export function MatchSelector(props: {
     game: Game,
     tipTeamId?: number,
     tipTeamIdDb?: number,
-    teamClick: (teamId: number) => void
+    teamClick: (gameId: number, teamId: number) => void
 }) {
     return (
         <>
@@ -204,7 +204,7 @@ function TeamCard(props: {
     tipId?: number,
     tipDbId?: number,
     home: boolean,
-    handleClick: (teamId: number) => void
+    handleClick: (gameId: number, teamId: number) => void
 }) {
     const team = props.home ? props.game.homeTeamObj : props.game.awayTeamObj;
 
@@ -215,7 +215,7 @@ function TeamCard(props: {
             <>
                 {team.score && <p
                     className={`col-span-1 
-                        ${props.home ? 'tall:col-start-2 col-start-3' : 'col-start-4 tall:col-start-5 md:col-start-5'} 
+                        ${props.home ? 'tall:col-start-2 col-start-3 justify-self-start' : 'col-start-4 tall:col-start-5 md:col-start-5 justify-self-end'} 
                         row-start-2 tall:row-start-4 md:row-start-2 m-1 tall:m-2 
                         text-2xl ${winner ? 'font-bold' : 'font-normal'} text-center 
                         m-auto`}
@@ -227,7 +227,12 @@ function TeamCard(props: {
 
     return (
         <>
-            <TeamTile team={team} home={props.home} tipId={props.tipId} tipDbId={props.tipDbId} handleClick={props.handleClick} />
+            {team.confidence && <p className={`col-span-1
+                ${props.home ? 'tall:col-start-2 col-start-3 justify-self-start' : 'col-start-4 tall:col-start-5 md:col-start-5 justify-self-end'}
+                row-start-2 tall:row-start-4 md:row-start-2 m-1 tall:m-2
+                text-xl self-center
+            `}>{team.confidence}%</p>}
+            <TeamTile team={team} home={props.home} tipId={props.tipId} tipDbId={props.tipDbId} handleClick={(teamId: number) => props.handleClick(props.game.game_id, teamId)} />
         </>
     )
 }

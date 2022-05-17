@@ -43,9 +43,7 @@ export async function getStaticProps({ params }: { params: { round: string } }) 
 
     const read = async (round: number) => {
         const { data, error } = await supabase.from('team').select(`
-            id, team_name, abbreviation, 
-            game_team!inner(home, goals, behinds, 
-            game!inner(id, venue, scheduled, round_year, round_number, complete)) 
+            id, team_name, abbreviation, game_team!inner(home, goals, behinds, prediction ( confidence), game!inner(id, venue, scheduled, round_year, round_number, complete)) 
         `).eq('game_team.game.round_year', new Date().getFullYear().toString()).gte('game_team.game.round_number', round - 3).lte('game_team.game.round_number', round);
 
         if (data !== null) {

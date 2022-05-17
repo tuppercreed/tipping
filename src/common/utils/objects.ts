@@ -25,6 +25,7 @@ interface gameTeamSupabase {
     team?: teamSupabase,
     tip?: tipSupabase[],
     game?: gameSupabase,
+    prediction?: { win: boolean, confidence: number, predictor: { id: number, predictor_name: string, predictor_url: string } }[],
     [index: string]: any,
 }
 
@@ -44,6 +45,7 @@ export class Team {
     behinds?: number;
     tips: tipSupabase[];
     abbreviation?: string;
+    confidence?: number;
 
     constructor(gameTeam: gameTeamSupabase) {
         if (gameTeam.team === undefined) {
@@ -60,6 +62,8 @@ export class Team {
         if ("abbreviation" in gameTeam.team!) {
             this.abbreviation = gameTeam.team.abbreviation;
         }
+
+        this.confidence = gameTeam.confidence;
     }
 
     tipped(person_id: string) {
@@ -136,6 +140,10 @@ export function teamsApiToGamesApi(teamsApi: teamSupabase[]): GamesApi {
                     let gameTeamNoGame = { ...gameTeam };
                     delete gameTeamNoGame.game;
                     gameTeamNoGame.team = teamNoGameTeam;
+                    if (gameTeamNoGame !== undefined && 'prediction' in gameTeamNoGame) {
+                        gameTeamNoGame.confidence = Math.round(gameTeamNoGame.prediction!.reduce((sum, prediction) => sum + prediction.confidence, 0) / gameTeamNoGame.prediction!.length);
+                        delete gameTeamNoGame.prediction;
+                    }
                     if (gameTeam.game.id in games) {
                         if (games[gameTeam.game.id].game_team === undefined) {
                             games[gameTeam.game.id].game_team = [gameTeamNoGame]
