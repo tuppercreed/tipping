@@ -120,9 +120,16 @@ CREATE TABLE prediction (
     predictor_id INTEGER REFERENCES predictor,
     win BOOLEAN,
     confidence DOUBLE PRECISION,
+    created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, 
     PRIMARY KEY (game_id, team_id, predictor_id),
     FOREIGN KEY (game_id, team_id) REFERENCES game_team (game_id, team_id)
 );
+
+CREATE TRIGGER set_timestamp_prediction
+BEFORE UPDATE ON prediction
+FOR EACH ROW
+EXECUTE FUNCTION trigger_set_timestamp();
 
 -- Profile permissions
 ALTER TABLE person ENABLE ROW LEVEL SECURITY;
