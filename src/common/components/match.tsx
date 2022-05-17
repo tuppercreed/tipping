@@ -53,7 +53,7 @@ export function MatchForm(props: {
     const handleTipSelect = (gameId: number, teamId: number) => {
         if (props.session) {
             // If tip is different from what was already returned from the database, record it as an update
-            if (tips?.[props.session.user!.id]?.[gameId].teamId !== teamId) {
+            if ((tips?.[props.session.user!.id] && !(gameId in tips?.[props.session.user!.id])) || tips?.[props.session.user!.id]?.[gameId].teamId !== teamId) {
                 setLocalTips({ [props.session.user!.id]: { ...localTips[props.session.user!.id], [gameId]: { teamId } } })
             }
         } else {
