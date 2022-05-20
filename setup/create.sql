@@ -40,6 +40,7 @@ CREATE TABLE game_team (
     game_id INTEGER NOT NULL REFERENCES game ON DELETE RESTRICT ON UPDATE CASCADE,
     team_id INTEGER NOT NULL REFERENCES team ON DELETE RESTRICT ON UPDATE CASCADE,
     home BOOLEAN NOT NULL,
+    winner BOOLEAN,
     goals INTEGER DEFAULT 0,
     behinds INTEGER DEFAULT 0,
     created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -87,7 +88,7 @@ CREATE TABLE person (
     avatar_url TEXT,
     website TEXT,
     created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP(3) NOT NULL,
+    updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     UNIQUE (username),
     CONSTRAINT username_length CHECK (char_length(username) >= 3)
@@ -144,6 +145,7 @@ INSERT INTO storage.buckets (id, name) VALUES ('avatars', 'avatars');
 
 -- Competition permissions
 ALTER TABLE competition ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Competitions are public." ON competition FOR SELECT USING ( TRUE );
 CREATE POLICY "Users can create a competition." ON competition FOR INSERT WITH CHECK ( auth.role() = 'authenticated');
 CREATE POLICY "Members can update competition details." ON competition FOR UPDATE USING (
     auth.uid() in (
@@ -156,7 +158,12 @@ ALTER TABLE tip ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can add tips." ON tip FOR INSERT WITH CHECK (auth.uid() = person_id AND game_id in (
     SELECT id FROM game WHERE game_started(scheduled) IS NOT TRUE
 ));
-CREATE POLICY "Users can see tips." ON tip FOR SELECT USING (auth.uid() = person_id);
+CREATE POLICY "Anyone can can complete tips." ON tip FOR SELECT USING (game_id IN (
+    SELECT game.id FROM game WHERE (game_started(game.scheduled) IS TRUE)
+))
+CREATE POLICY "Users can see tips." ON tip FOR SELECT USING (
+    auth.uid() = person_id
+);
 CREATE POLICY "Users can update tips." ON tip FOR UPDATE USING (TRUE) WITH CHECK (auth.uid() = person_id AND game_id in (
     SELECT id FROM game WHERE game_started(scheduled) IS NOT TRUE
 ));
@@ -230,10 +237,7 @@ FOR EACH ROW
 EXECUTE FUNCTION trigger_set_timestamp();
 
 ALTER TABLE competition_rankings_summary ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Logged in can see all results." ON competition_rankings_summary FOR SELECT USING (
-    person_id IN (SELECT competitions_persons.person_id FROM competitions_persons WHERE competition_id IN
-    ( SELECT competition_id FROM competitions_persons WHERE competitions_persons.person_id = auth.uid() ))
-);
+CREATE POLICY "Rankings are public." ON competition_rankings_summary FOR SELECT USING ( TRUE );
 
 CREATE OR REPLACE PROCEDURE insert_summary_rankings(r_year INTEGER, r_number INTEGER) AS $$
     INSERT INTO competition_rankings_summary 
@@ -276,5 +280,41 @@ AS $$
     GROUP BY username;
 $$ LANGUAGE SQL;
 
+CREATE OR REPLACE FUNCTION tip_results(comp_id INTEGER, r_year INTEGER, r_number INTEGER)
+RETURNS TABLE (person_id UUID, game_id INTEGER, team_id INTEGER, correct BOOLEAN, drawn BOOLEAN, username TEXT)
+AS $$
+    SELECT tip.person_id, tip.game_id, tip.team_id, tipped.winner AS correct, 
+        (calculate_score(tipped) = calculate_score(not_tipped)) AS drawn, 
+        person.username, team.team_name
+    FROM tip
+    INNER JOIN person ON tip.person_id = person.id
+    INNER JOIN competitions_persons ON person.id = competitions_persons.person_id
+    INNER JOIN game_team tipped ON tip.game_id = tipped.game_id AND tip.team_id = tipped.team_id
+    INNER JOIN game_team not_tipped ON tip.game_id = not_tipped.game_id AND tip.team_id <> not_tipped.team_id
+    INNER JOIN game ON tip.game_id = game.id
+    INNER JOIN team ON tip.team_id = team.id
+    WHERE game.round_year = r_year AND game.round_number = r_number AND competitions_persons.competition_id = comp_id
+    ORDER BY tip.person_id, tip.game_id;
+$$ LANGUAGE SQL;
 
+CREATE OR REPLACE FUNCTION tip_tally(comp_id INTEGER, r_year INTEGER, r_number INTEGER)
+RETURNS TABLE (person_id UUID, username TEXT, score INTEGER)
+AS $$
+    SELECT tip.person_id, person.username, COUNT(*) FILTER (WHERE game_team.winner)
+    FROM tip
+    INNER JOIN game_team ON tip.game_id = game_team.game_id AND tip.team_id = game_team.team_id
+    INNER JOIN game ON tip.game_id = game.id
+    INNER JOIN person ON tip.person_id = person.id
+    WHERE game.round_year = r_year AND game.round_number <= r_number
+    GROUP BY tip.person_id, person.username;
+$$ LANGUAGE SQL;
+
+
+
+CREATE VIEW rank_pages AS
+    SELECT DISTINCT game.round_number, competitions_persons.competition_id
+    FROM tip
+    INNER JOIN game ON tip.game_id = game.id
+    INNER JOIN competitions_persons ON tip.person_id = competitions_persons.person_id
+    WHERE game.round_year = date_part('year', CURRENT_DATE);
 COMMIT;

@@ -422,6 +422,7 @@ export interface paths {
           behinds?: parameters["rowFilter.game_team.behinds"];
           created_at?: parameters["rowFilter.game_team.created_at"];
           updated_at?: parameters["rowFilter.game_team.updated_at"];
+          winner?: parameters["rowFilter.game_team.winner"];
           /** Filtering Columns */
           select?: parameters["select"];
           /** Ordering */
@@ -479,6 +480,7 @@ export interface paths {
           behinds?: parameters["rowFilter.game_team.behinds"];
           created_at?: parameters["rowFilter.game_team.created_at"];
           updated_at?: parameters["rowFilter.game_team.updated_at"];
+          winner?: parameters["rowFilter.game_team.winner"];
         };
         header: {
           /** Preference */
@@ -500,6 +502,7 @@ export interface paths {
           behinds?: parameters["rowFilter.game_team.behinds"];
           created_at?: parameters["rowFilter.game_team.created_at"];
           updated_at?: parameters["rowFilter.game_team.updated_at"];
+          winner?: parameters["rowFilter.game_team.winner"];
         };
         body: {
           /** game_team */
@@ -627,6 +630,8 @@ export interface paths {
           predictor_id?: parameters["rowFilter.prediction.predictor_id"];
           win?: parameters["rowFilter.prediction.win"];
           confidence?: parameters["rowFilter.prediction.confidence"];
+          created_at?: parameters["rowFilter.prediction.created_at"];
+          updated_at?: parameters["rowFilter.prediction.updated_at"];
           /** Filtering Columns */
           select?: parameters["select"];
           /** Ordering */
@@ -682,6 +687,8 @@ export interface paths {
           predictor_id?: parameters["rowFilter.prediction.predictor_id"];
           win?: parameters["rowFilter.prediction.win"];
           confidence?: parameters["rowFilter.prediction.confidence"];
+          created_at?: parameters["rowFilter.prediction.created_at"];
+          updated_at?: parameters["rowFilter.prediction.updated_at"];
         };
         header: {
           /** Preference */
@@ -701,6 +708,8 @@ export interface paths {
           predictor_id?: parameters["rowFilter.prediction.predictor_id"];
           win?: parameters["rowFilter.prediction.win"];
           confidence?: parameters["rowFilter.prediction.confidence"];
+          created_at?: parameters["rowFilter.prediction.created_at"];
+          updated_at?: parameters["rowFilter.prediction.updated_at"];
         };
         body: {
           /** prediction */
@@ -807,6 +816,40 @@ export interface paths {
       responses: {
         /** No Content */
         204: never;
+      };
+    };
+  };
+  "/rank_pages": {
+    get: {
+      parameters: {
+        query: {
+          round_number?: parameters["rowFilter.rank_pages.round_number"];
+          competition_id?: parameters["rowFilter.rank_pages.competition_id"];
+          /** Filtering Columns */
+          select?: parameters["select"];
+          /** Ordering */
+          order?: parameters["order"];
+          /** Limiting and Pagination */
+          offset?: parameters["offset"];
+          /** Limiting and Pagination */
+          limit?: parameters["limit"];
+        };
+        header: {
+          /** Limiting and Pagination */
+          Range?: parameters["range"];
+          /** Limiting and Pagination */
+          "Range-Unit"?: parameters["rangeUnit"];
+          /** Preference */
+          Prefer?: parameters["preferCount"];
+        };
+      };
+      responses: {
+        /** OK */
+        200: {
+          schema: definitions["rank_pages"][];
+        };
+        /** Partial Content */
+        206: unknown;
       };
     };
   };
@@ -1448,6 +1491,8 @@ export interface definitions {
      * @default CURRENT_TIMESTAMP
      */
     updated_at: string;
+    /** Format: boolean */
+    winner?: boolean;
   };
   person: {
     /**
@@ -1467,7 +1512,10 @@ export interface definitions {
      * @default CURRENT_TIMESTAMP
      */
     created_at: string;
-    /** Format: timestamp without time zone */
+    /**
+     * Format: timestamp without time zone
+     * @default CURRENT_TIMESTAMP
+     */
     updated_at: string;
   };
   prediction: {
@@ -1494,6 +1542,16 @@ export interface definitions {
     win?: boolean;
     /** Format: double precision */
     confidence?: number;
+    /**
+     * Format: timestamp without time zone
+     * @default CURRENT_TIMESTAMP
+     */
+    created_at: string;
+    /**
+     * Format: timestamp without time zone
+     * @default CURRENT_TIMESTAMP
+     */
+    updated_at: string;
   };
   predictor: {
     /**
@@ -1506,6 +1564,21 @@ export interface definitions {
     predictor_name: string;
     /** Format: text */
     predictor_url?: string;
+  };
+  rank_pages: {
+    /**
+     * Format: integer
+     * @description Note:
+     * This is a Primary Key.<pk/>
+     */
+    round_number?: number;
+    /**
+     * Format: integer
+     * @description Note:
+     * This is a Primary Key.<pk/>
+     * This is a Foreign Key to `competition.id`.<fk table='competition' column='id'/>
+     */
+    competition_id?: number;
   };
   team: {
     /**
@@ -1674,6 +1747,8 @@ export interface parameters {
   "rowFilter.game_team.created_at": string;
   /** Format: timestamp without time zone */
   "rowFilter.game_team.updated_at": string;
+  /** Format: boolean */
+  "rowFilter.game_team.winner": string;
   /** @description person */
   "body.person": definitions["person"];
   /** Format: uuid */
@@ -1700,6 +1775,10 @@ export interface parameters {
   "rowFilter.prediction.win": string;
   /** Format: double precision */
   "rowFilter.prediction.confidence": string;
+  /** Format: timestamp without time zone */
+  "rowFilter.prediction.created_at": string;
+  /** Format: timestamp without time zone */
+  "rowFilter.prediction.updated_at": string;
   /** @description predictor */
   "body.predictor": definitions["predictor"];
   /** Format: integer */
@@ -1708,6 +1787,12 @@ export interface parameters {
   "rowFilter.predictor.predictor_name": string;
   /** Format: text */
   "rowFilter.predictor.predictor_url": string;
+  /** @description rank_pages */
+  "body.rank_pages": definitions["rank_pages"];
+  /** Format: integer */
+  "rowFilter.rank_pages.round_number": string;
+  /** Format: integer */
+  "rowFilter.rank_pages.competition_id": string;
   /** @description team */
   "body.team": definitions["team"];
   /** Format: integer */

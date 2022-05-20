@@ -73,7 +73,7 @@ export class UpdateGames<T extends SquiggleResponse> implements Updateable {
         for (const table of this.dataSupabase) {
             for (const [tableName, updates] of Object.entries(table)) {
                 if (updates.length === 0) throw new Error('No data provided to upsert function');
-                const { data, error } = await supabase.from(tableName).upsert(updates, { returning: 'minimal', ignoreDuplicates: true });
+                const { data, error } = await supabase.from(tableName).upsert(updates, { returning: 'minimal' });
                 if (error) throw error;
             }
         }
@@ -104,7 +104,11 @@ export class UpdateGames<T extends SquiggleResponse> implements Updateable {
                 round_number: game.round,
                 round_name: game.roundname,
             }
-        });
+        }).filter((value, index, self) =>
+            index === self.findIndex((t) => (
+                t.round_year === value.round_year && t.round_number === value.round_number
+            ))
+        );
 
         const games: Omit<definitions['game'], 'created_at' | 'updated_at'>[] = (this.dataSquiggle as GameSquiggle[]).map((game) => {
             return {
@@ -123,6 +127,7 @@ export class UpdateGames<T extends SquiggleResponse> implements Updateable {
                     game_id: game.id,
                     team_id: game[codes[0]],
                     home: codes[1],
+                    winner: (game.winnerteamid === game[codes[0]]),
                     goals: game[codes[2]],
                     behinds: game[codes[3]],
                 }
@@ -217,7 +222,7 @@ export class UpdateTips extends UpdateGames<TipSquiggle> implements Updateable {
 
     translate() {
         return [{
-            [this.tableName]: this.dataSquiggle.map<definitions['prediction'][]>((tip) => {
+            [this.tableName]: this.dataSquiggle.map<Omit<definitions['prediction'], 'created_at' | 'updated_at'>[]>((tip) => {
                 const codes: { teamId: 'hteamid' | 'ateamid', confidence: (hconfidence: string) => number }[] = [
                     { teamId: 'hteamid', confidence: (hconfidence: string) => parseFloat(hconfidence) },
                     { teamId: 'ateamid', confidence: (hconfidence: string) => 100 - parseFloat(hconfidence) }

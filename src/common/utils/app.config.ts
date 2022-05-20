@@ -9,7 +9,7 @@ export interface AppConfig {
 export const AppConfig: AppConfig = {
     aflEndpoint: "https://api.squiggle.com.au/",
     local: true,
-    round: 11,
+    round: 7,
     roundMax: 23,
     redirectUrl: 'http://localhost:3000'
 }

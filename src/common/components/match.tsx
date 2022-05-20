@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { Data, Game, MatchResult, Team, Tips, UserTips } from '../utils/objects';
-import { PostgrestError, Session } from '@supabase/supabase-js';
+import { Data, Game, MatchResult, Team, UserTips } from '../utils/objects';
+import { Session } from '@supabase/supabase-js';
 import Image from 'next/image'
 import { format } from 'date-fns'
-import { supabase } from '../../modules/supabase/client';
 import { AuthDialog } from '../../modules/supabase/components/Auth';
 import { useSpring, animated } from '@react-spring/web'
 import { useMeasure } from '../hooks/measure';
 import { faQuestion, faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useTips } from '../hooks/tips';
+import { TeamLogo, logoPath } from './team';
 
 function* intersperseDate<X>(a: X[], dates: Date[]) {
     if (a.length !== dates.length) {
@@ -26,10 +26,6 @@ function* intersperseDate<X>(a: X[], dates: Date[]) {
         yield a[i]
 
     }
-}
-
-const logoPath = (teamName: string) => {
-    return `/teamLogos/${teamName.replaceAll(' ', '_')}.svg`;
 }
 
 export function MatchForm(props: {
@@ -296,28 +292,6 @@ function TeamTile(props: {
         </div>
     )
 }
-
-function TeamLogo(props: { size: 'big' | 'small', teamName: string }) {
-    let size = '';
-
-    switch (props.size) {
-        case 'big':
-            size = 'w-28 h-28'
-            break;
-        case 'small':
-            size = 'w-10 h-10'
-            break;
-    }
-
-
-    return (
-        <div className={`relative max-w-full ${size}`}>
-            <Image src={logoPath(props.teamName)} alt={`Logo of ${props.teamName}`} className='h-auto' layout='fill' objectFit='contain' />
-        </div>
-    )
-}
-
-
 
 function History(props: { gameId: number, content: Data }) {
     const game = props.content.games[props.gameId];

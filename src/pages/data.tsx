@@ -2,10 +2,6 @@ import { GetStaticProps } from 'next';
 import React from 'react';
 import { AppConfig } from '../common/utils/app.config';
 import { UpdateGames, UpdateSources, UpdateStandings, UpdateTeams, UpdateTips } from '../common/utils/data';
-import { gamesSupabaseToGames } from '../common/utils/objects';
-import { fetchGames, fetchTeams } from '../modules/squiggle/fetch';
-import { updateGames, updateTeams } from '../modules/squiggle/toSupabase';
-import { Game } from '../modules/squiggle/types';
 
 export const getStaticProps: GetStaticProps = async () => {
     if (!AppConfig.local) {
