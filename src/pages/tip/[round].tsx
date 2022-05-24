@@ -1,38 +1,15 @@
 import { Session } from '@supabase/supabase-js';
 import React, { useEffect, useState } from 'react';
-import { SelectRound } from '../../common/components/tipping';
+import { SelectRound } from '../../common/components/selectRound';
 import { MatchForm } from "../../common/components/match";
 import { useTips } from '../../common/hooks/tips';
 import { ApiToObject, GamesApi, teamsApiToGamesApi, teamSupabase } from '../../common/utils/objects';
 import { supabase } from '../../modules/supabase/client';
 
 export async function getStaticPaths() {
+    const rounds = Array.from({ length: 23 }, (_, i) => i + 1);
     return {
-        paths: [
-            { params: { round: '1' } },
-            { params: { round: '2' } },
-            { params: { round: '3' } },
-            { params: { round: '4' } },
-            { params: { round: '5' } },
-            { params: { round: '6' } },
-            { params: { round: '7' } },
-            { params: { round: '8' } },
-            { params: { round: '9' } },
-            { params: { round: '10' } },
-            { params: { round: '11' } },
-            { params: { round: '12' } },
-            { params: { round: '13' } },
-            { params: { round: '14' } },
-            { params: { round: '15' } },
-            { params: { round: '16' } },
-            { params: { round: '17' } },
-            { params: { round: '18' } },
-            { params: { round: '19' } },
-            { params: { round: '20' } },
-            { params: { round: '21' } },
-            { params: { round: '22' } },
-            { params: { round: '23' } },
-        ],
+        paths: rounds.map((round) => { return { params: { round: round.toString() } } }),
         fallback: false
     }
 }
@@ -79,8 +56,8 @@ export default function Round({ gamesApi, round }: { gamesApi: GamesApi, round: 
 
     return (
         <>
-            <div className='mb-2 flex flex-col flex-grow gap-2 items-stretch w-full sm:w-[90vw] md:w-[80vw] lg:w-[70vw] xl:w-[60vw]'>
-                <SelectRound round={round} />
+            <div className='mb-2 flex flex-col flex-grow items-stretch w-full sm:w-[90vw] md:w-[80vw] lg:w-[70vw] xl:w-[60vw]'>
+                <h2 className='text-white text-3xl mt-2 mx-2 px-1'>Round {round}</h2>
 
                 {round in data.rounds && <MatchForm content={data} session={session} round={round} />}
                 {!(round in data.rounds) && <h2 className='text-3xl'>Round Data Missing</h2>}

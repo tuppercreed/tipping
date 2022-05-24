@@ -318,3 +318,10 @@ CREATE VIEW rank_pages AS
     INNER JOIN competitions_persons ON tip.person_id = competitions_persons.person_id
     WHERE game.round_year = date_part('year', CURRENT_DATE);
 COMMIT;
+
+CREATE VIEW next_round AS
+    SELECT round_number
+    FROM game
+    WHERE round_year = date_part('year', CURRENT_DATE)
+    ORDER BY scheduled DESC
+    LIMIT 1;

@@ -23,53 +23,68 @@ export async function getStaticProps() {
 const cols: (keyof Standing)[] = ['rank', 'name', 'pts', 'played', 'percentage', 'wins', 'losses', 'draws', 'for', 'against'];
 const colNames = ['Rank', '', 'Name', 'Points', 'Played', '%', 'Won', 'Lost', 'Drawn', 'For', 'Against'];
 
+function HCell(props: { c: string | number | JSX.Element, className?: string }) {
+    return (
+        <th className={`
+            text-[0px] first-letter:text-base sm:text-base text-center
+            ${props.className}`}>
+            {props.c}
+        </th>
+    )
+}
+
+function Cell(props: { c: string | number | JSX.Element, className?: string }) {
+    return (
+        <td className={`
+            min-w-[35px] border-b border-sky-700/25 text-center
+            ${props.className}
+        `}>
+            {props.c}
+        </td>
+    )
+}
+
 export default function Ladder({ standings }: { standings: Standing[] }) {
 
     let rows = standings.map((team) => {
         let row = cols.map((col) => {
+            if (col === 'for' || col === 'against' || col === 'percentage') return <Cell key={`${team.id}_${col}`} c={team[col]} className='hidden sm:table-cell' />
             return (
                 <td
                     key={`${team.id}_${col}`}
                     className={`
                     min-w-[35px]
-                    border-b border-cyan-200
+                    border-b border-sky-700/25
                     ${col === 'name' ? 'text-left' : 'text-center'}
                 `}>{team[col]}</td>
             );
         });
         row.splice(1, 0,
-            <td className='py-2 border-b border-cyan-200'><TeamLogo key={`${team.id}_logo`} size='small' teamName={team.name} className='' /></td>
+            <td key={`${team.id}_logo`} className='py-2 border-b border-sky-700/25'><TeamLogo size='small' teamName={team.name} className='' /></td>
         );
         return (
-            <tr key={team.id} className='even:bg-cyan-50'>{row}</tr>
+            <tr key={team.id} className='odd:bg-sky-500/25 even:bg-sky-600/25 hover:even:bg-sky-800/25 hover:odd:bg-sky-300/25'>{row}</tr>
         );
     })
 
     return (
-        <>
-            <h2 className='text-xl text-center'>Ladder</h2>
-            <hr />
+        <div className='w-[100vw] sm:w-[95vw] md:w-[85vw] lg:w-[75vw]'>
+
+            <h2 className='text-white text-3xl mt-2 mx-2 self-start '>Ladder</h2>
 
             <table className={`
             m-1 sm:m-2 
             table-auto
             overflow-scroll
-            w-[100vw] sm:w-[95vw] md:w-[85vw] lg:w-[75vw] 
+            w-full
             border-collapse
-            shadow
             `}>
                 <thead>
-                    <tr className='font-bold border-b border-cyan-400 bg-cyan-700 text-slate-100'>
+                    <tr className='font-bold border-b border-sky-700/25 text-slate-100'>
                         {colNames.map((name) => {
-                            return (
-                                <th
-                                    key={name}
-                                    className={`
-                                text-[0px] first-letter:text-base sm:text-base
-                                ${name === 'Name' ? 'text-left' : 'text-center'}
-                                `}
-                                >{name}</th>
-                            )
+                            if (name === 'Name') return <HCell key={name} c={name} className='text-left' />
+                            else if (name === 'For' || name === 'Against' || name === '%') return <HCell key={name} c={name} className='hidden sm:table-cell' />
+                            return <HCell key={name} c={name} />
                         })}
                     </tr>
                 </thead>
@@ -79,6 +94,6 @@ export default function Ladder({ standings }: { standings: Standing[] }) {
                 </tbody>
 
             </table>
-        </>
+        </div>
     )
 }

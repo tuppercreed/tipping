@@ -7,13 +7,13 @@ export async function getStaticPaths() {
     const { data, error } = await supabase.from('rank_pages').select('*');
 
     if (data !== null) {
-        let pages: { params: { competition: string, round: string } }[] = (data as {
+        let pages: { params: { comp: string, round: string } }[] = (data as {
             round_number: number,
             competition_id: number,
         }[]).map((res) => {
             return {
                 params: {
-                    competition: res.competition_id.toString(),
+                    comp: res.competition_id.toString(),
                     round: res.round_number.toString()
                 }
             }
@@ -38,11 +38,11 @@ interface Performance {
     team_name: string,
 }
 
-export async function getStaticProps({ params }: { params: { competition: string, round: string } }) {
-    if (isNaN(Number(params.competition))) throw new Error('Invalid competition id');
+export async function getStaticProps({ params }: { params: { comp: string, round: string } }) {
+    if (isNaN(Number(params.comp))) throw new Error('Invalid competition id');
     if (isNaN(Number(params.round))) throw new Error('Invalid round id');
 
-    const comp_id = Math.round(Number(params.competition));
+    const comp_id = Math.round(Number(params.comp));
     const r_number = Math.round(Number(params.round));
 
     const tallyResponse = await supabase.rpc('tip_tally', { comp_id, r_year: new Date().getFullYear(), r_number });
@@ -101,14 +101,15 @@ export default function Rank({ performance, tally, round, competition }: {
     round: number,
     competition: number
 }) {
-    const gameNum = performance ? Object.values(performance)?.reduce((longest, next) => {
+    let gameNum = performance ? Object.values(performance)?.reduce((longest, next) => {
         if (next.length > longest) return next.length
         return longest
     }, 0) : undefined;
+    if (gameNum === 0) gameNum = undefined;
 
     return (
         <>
-            <h2 className="text-xl text-center">Ranks for Round {round}</h2>
+            <h2 className="text-white text-3xl mt-2 mx-2 px-1 self-start">Ranks - Round {round}</h2>
 
             <table className={`
                 m-1 sm:m-2

@@ -20,7 +20,7 @@ function* intersperseDate<X>(a: X[], dates: Date[]) {
         if (dates[i].getDate() !== prevDate.getDate()) {
             prevDate = dates[i];
             yield (
-                <p key={dates[i].getDate()} className='text-xl text-slate-50 m-2'>{format(dates[i], "eeee', ' do' of 'MMMM")}</p>
+                <p key={dates[i].getDate()} className='text-xl text-slate-50 m-2 px-1'>{format(dates[i], "eeee', ' do' of 'MMMM")}</p>
             );
         }
         yield a[i]
@@ -120,7 +120,7 @@ export function Match(props: {
     const boxes = [...intersperseDate(gameBoxes, gameIds.map((gameId) => props.content.games[gameId].scheduled))];
 
     return (
-        <div className='bg-gradient-to-r from-cyan-500 to-blue-500 py-2 md:p-2 shadow-md rounded'>
+        <div className=' py-0 md:p-1'>
             {boxes}
         </div>
     )
@@ -146,7 +146,7 @@ export function SelectTeam(props: {
     });
 
     return (
-        <div className='flex flex-col items-stretch m-2 p-1 md:px-2 tall:py-2 bg-clip-padding backdrop-filter backdrop-blur-xl bg-opacity-40 bg-white rounded shadow-md'>
+        <div className='flex flex-col items-stretch m-2 p-1 md:px-2 tall:py-2'>
             <div
                 onClick={() => props.setExpanded(isOpen ? false : props.gameId)}
                 className='grid grid-cols-6 tall:grid-cols-6 md:grid-cols-7 grid-rows-3 tall:grid-rows-4 md:grid-rows-3 gap-1 md:gap-2 h-32 md:h-40 tall:h-52'
@@ -154,7 +154,7 @@ export function SelectTeam(props: {
                 <MatchSelector session={props.session} game={props.content.games[props.gameId]} tipTeamId={props.tipTeamId} tipTeamIdDb={props.tipTeamIdDb} teamClick={props.handleClick} />
             </div>
 
-            <animated.div style={styles}>
+            <animated.div style={styles} className='overflow-hidden'>
                 <div ref={ref}>
                     <div className='separator p-4'>
                         history
@@ -254,7 +254,7 @@ function TeamTile(props: {
         return (
             <div
                 className={`
-                    bg-clip-padding backdrop-filter backdrop-blur-xl bg-opacity-40 bg-white
+                    bg-clip-padding backdrop-filter backdrop-blur-xl bg-opacity-80 bg-slate-400
                     shadow-md border-2 rounded-xl ${props.home ? 'border-r-8' : 'border-l-8'} ${tipColor}
                     row-span-3 tall:row-span-3
                     col-span-2 tall:col-span-3 md:col-span-2 
