@@ -1,4 +1,6 @@
-import React from "react";
+import React, { ReactElement } from "react";
+import { Layout } from "../../../common/components/layout";
+import { Cell, HCell, Heading, Row, Table } from "../../../common/components/table";
 import { TeamLogo } from "../../../common/components/team";
 import { supabase } from "../../../modules/supabase/client";
 
@@ -67,33 +69,6 @@ export async function getStaticProps({ params }: { params: { comp: string, round
     return { props: { competition: comp_id, tally } }
 }
 
-function Cell(props: { c: string | number | JSX.Element, className?: string }) {
-    return <td className={`p-0 sm:px-1 md:p-2 text-center border-b-2 border-cyan-200 ${props.className}`}>{props.c}</td>;
-}
-
-function HCell(props: { c: string | number | JSX.Element, className?: string }) {
-    return <th className={`px-0 py-1 text-[0px] first-letter:text-base sm:text-base text-center ${props.className}`}>{props.c}</th>
-}
-
-function Row(props: { round: number, username: string, score: number, performance?: Performance[] }) {
-    const roundScore = props.performance?.reduce((score, perf) => perf.correct ? score + 1 : score, 0);
-
-    return (
-        <tr className='even:bg-cyan-50' key={props.username}>
-            <Cell c={
-                <>{props.username.split(' ').map((word) => <span key={word} className={`inline-block text-[0px] first-letter:text-base md:text-base`}>{word} </span>)}</>
-            } />
-            <Cell c={props.score} />
-            {roundScore && <Cell c={roundScore} />}
-            {roundScore && <Cell className={`hidden sm:block`} c={Math.round(roundScore / props.round * 10) / 10} />}
-            {props.performance?.map((perf) => {
-                return <Cell key={perf.game_id} className={`${perf.correct ? 'border-green-400' : 'border-red-400'}`} c={
-                    <TeamLogo size='small' teamName={perf.team_name} />
-                } />
-            })}
-        </tr>
-    );
-}
 
 export default function Rank({ performance, tally, round, competition }: {
     performance?: { [personId: string]: Performance[] },
@@ -107,32 +82,53 @@ export default function Rank({ performance, tally, round, competition }: {
     }, 0) : undefined;
     if (gameNum === 0) gameNum = undefined;
 
+    const headings: { c: string, className?: string }[] = [
+        { c: 'Username', className: 'text-left' },
+        { c: 'Wins' },
+        { c: `Round ${round}` },
+        { c: 'Avg. per round', className: 'hidden sm:table-cell' },
+    ];
+
     return (
-        <>
-            <h2 className="text-white text-3xl mt-2 mx-2 px-1 self-start">Ranks - Round {round}</h2>
+        <Layout {...{ round, comp: competition, title: `Ranks - Round ${round}` }}>
+            <Table heading={
+                <Heading>
+                    {headings.map(({ c, className }) => {
+                        return <HCell key={c} className={className}>{c}</HCell>;
+                    })}
+                    {gameNum && [...Array(gameNum).keys()].map((num) => <HCell key={`game_${num + 1}`}>{num + 1}</HCell>)}
+                </Heading>
+            }>
+                {Object.entries(tally).map(([personId, { username, score }]) => {
+                    const roundScore = performance?.[personId]?.reduce((score, perf) => perf.correct ? score + 1 : score, 0);
+                    const avgScore = roundScore ? Math.round(roundScore / round * 10) / 10 : undefined;
+                    return (
+                        <Row key={personId}>
+                            {[
+                                <>{username.split(' ').map((word) => <span key={word} className={`inline-block text-[0px] first-letter:text-base md:text-base`}>{word}</span>)}</>,
+                                score,
+                                roundScore
+                            ].map((elem) => <Cell key={elem?.toString()}>{elem}</Cell>)}
 
-            <table className={`
-                m-1 sm:m-2
-                table-auto
-                overflow-scroll
-                w-[99vw] sm:w-[95vw] md:w-[85vw] lg:w-[75vw] 
-                border-collapse
-                shadow
-            `}>
-                <thead>
-                    <tr className="font-bold border-b border-cyan-400 bg-cyan-700 text-slate-100">
-                        <HCell c='Username' className='text-left' />
-                        {['Wins', `Round ${round}`].map((text) => <HCell key={text} c={text} />)}
-                        <HCell className='hidden sm:block' c={'Avg. per round'} />
-                        {gameNum && [...Array(gameNum).keys()].map((num) => <HCell key={`game_${num + 1}`} c={num + 1} />)}
-                    </tr>
-                </thead>
+                            <Cell className="hidden sm:table-cell">{avgScore}</Cell>
 
-                <tbody>
-                    {Object.entries(tally).map(([personId, { username, score }]) => <Row key={username} round={round} score={score} username={username} performance={performance?.[personId]} />)}
-                </tbody>
-            </table>
-
-        </>
+                            {performance?.[personId]?.map((perf) => {
+                                return (
+                                    <Cell
+                                        key={perf.game_id}
+                                        className={`${perf.correct ? 'border-green-400' : 'border-red-400'}`}
+                                    >
+                                        <TeamLogo size='small' teamName={perf.team_name} className='mx-auto' />
+                                    </Cell>
+                                )
+                            })}
+                        </Row>
+                    );
+                })}
+            </Table>
+        </Layout>
     )
 }
+
+// Do not render the default layout
+Rank.getLayout = ((page: ReactElement) => page);

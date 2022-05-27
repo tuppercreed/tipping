@@ -6,27 +6,10 @@ import { format } from 'date-fns'
 import { AuthDialog } from '../../modules/supabase/components/Auth';
 import { useSpring, animated } from '@react-spring/web'
 import { useMeasure } from '../hooks/measure';
-import { faQuestion, faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { faQuestion } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useTips } from '../hooks/tips';
 import { TeamLogo, logoPath } from './team';
-
-function* intersperseDate<X>(a: X[], dates: Date[]) {
-    if (a.length !== dates.length) {
-        throw new Error('Dates and list need to be the same length to intersperse!');
-    }
-    let prevDate: Date = new Date(0);
-    for (let i = 0; i < dates.length; i++) {
-        if (dates[i].getDate() !== prevDate.getDate()) {
-            prevDate = dates[i];
-            yield (
-                <p key={dates[i].getDate()} className='text-xl text-slate-50 m-2 px-1'>{format(dates[i], "eeee', ' do' of 'MMMM")}</p>
-            );
-        }
-        yield a[i]
-
-    }
-}
 
 export function MatchForm(props: {
     content: Data,
@@ -79,7 +62,7 @@ export function MatchForm(props: {
         <>
             <AuthDialog active={authModal} setActive={setAuthModal} />
 
-            <Match content={props.content} tipsDb={localTips?.[props.session?.user?.id ?? '']} session={props.session} round={props.round} tips={tips?.[props.session?.user?.id ?? '']} handleTip={handleTipSelect} />
+            <Matches content={props.content} tipsDb={localTips?.[props.session?.user?.id ?? '']} session={props.session} round={props.round} tips={tips?.[props.session?.user?.id ?? '']} handleTip={handleTipSelect} />
             {props.session && <div className='z-50 relative flex flex-row gap-4 items-center'>
                 <animated.p style={submitMsgStyles} className=''>{submissionText}</animated.p>
             </div>}
@@ -89,7 +72,7 @@ export function MatchForm(props: {
 
 }
 
-export function Match(props: {
+export function Matches(props: {
     content: Data,
     tips?: UserTips,
     tipsDb?: UserTips,
@@ -97,36 +80,48 @@ export function Match(props: {
     round: number,
     handleTip: (gameId: number, teamId: number) => void
 }) {
-    const gameIds = props.content.rounds[props.round].map((match) => match.gameId);
+    const games = props.content.rounds[props.round].map((match) => props.content.games[match.gameId]);
 
     const [expanded, setExpanded] = useState<false | number>(0);
 
-    const gameBoxes = gameIds.map((gameId) => {
+    const elems = games.reduce((elems, game) => {
+        const match = (
+            <Match
+                key={game.game_id}
+                session={props.session}
+                expanded={expanded}
+                setExpanded={setExpanded}
+                gameId={game.game_id}
+                tipTeamId={props.tips?.[game.game_id]?.teamId}
+                tipTeamIdDb={props.tipsDb?.[game.game_id]?.teamId}
+                content={props.content}
+                handleClick={props.handleTip}
+                round={props.round}
+            />
+        );
+        elems.get(game.scheduled.toDateString())?.push(match) ?? elems.set(game.scheduled.toDateString(), [match])
+        return elems;
+    }, new Map<string, JSX.Element[]>());
 
-        return <SelectTeam
-            key={gameId}
-            session={props.session}
-            expanded={expanded}
-            setExpanded={setExpanded}
-            gameId={gameId}
-            tipTeamId={props.tips?.[gameId]?.teamId}
-            tipTeamIdDb={props.tipsDb?.[gameId]?.teamId}
-            content={props.content}
-            handleClick={props.handleTip}
-            round={props.round}
-        />;
-    })
+    let groups: JSX.Element[] = [];
+    for (const [date, matches] of elems) {
+        groups.push(
+            <div key={date} className='flex flex-col gap-2'>
+                <p key={date} className='text-xl text-slate-50'>{format(new Date(date), "eeee', ' do' of 'MMMM")}</p>
 
-    const boxes = [...intersperseDate(gameBoxes, gameIds.map((gameId) => props.content.games[gameId].scheduled))];
+                {matches}
+            </div>
+        )
+    }
 
     return (
-        <div className=' py-0 md:p-1'>
-            {boxes}
-        </div>
+        <>
+            {groups}
+        </>
     )
 }
 
-export function SelectTeam(props: {
+export function Match(props: {
     expanded: false | number,
     setExpanded: React.Dispatch<React.SetStateAction<number | false>>,
     session: Session | null,
@@ -146,7 +141,7 @@ export function SelectTeam(props: {
     });
 
     return (
-        <div className='flex flex-col items-stretch m-2 p-1 md:px-2 tall:py-2'>
+        <div className='flex flex-col items-stretch'>
             <div
                 onClick={() => props.setExpanded(isOpen ? false : props.gameId)}
                 className='grid grid-cols-6 tall:grid-cols-6 md:grid-cols-7 grid-rows-3 tall:grid-rows-4 md:grid-rows-3 gap-1 md:gap-2 h-32 md:h-40 tall:h-52'

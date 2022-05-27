@@ -1,4 +1,6 @@
-import React from 'react'
+import React, { ReactElement } from 'react'
+import { Layout } from '../common/components/layout';
+import { HCell, Cell, Row, Table, Heading } from '../common/components/table';
 import { TeamLogo } from '../common/components/team';
 import { Standing } from '../modules/squiggle/types';
 import { supabase } from '../modules/supabase/client';
@@ -23,77 +25,42 @@ export async function getStaticProps() {
 const cols: (keyof Standing)[] = ['rank', 'name', 'pts', 'played', 'percentage', 'wins', 'losses', 'draws', 'for', 'against'];
 const colNames = ['Rank', '', 'Name', 'Points', 'Played', '%', 'Won', 'Lost', 'Drawn', 'For', 'Against'];
 
-function HCell(props: { c: string | number | JSX.Element, className?: string }) {
-    return (
-        <th className={`
-            text-[0px] first-letter:text-base sm:text-base text-center
-            ${props.className}`}>
-            {props.c}
-        </th>
-    )
-}
 
-function Cell(props: { c: string | number | JSX.Element, className?: string }) {
-    return (
-        <td className={`
-            min-w-[35px] border-b border-sky-700/25 text-center
-            ${props.className}
-        `}>
-            {props.c}
-        </td>
-    )
-}
 
 export default function Ladder({ standings }: { standings: Standing[] }) {
 
     let rows = standings.map((team) => {
         let row = cols.map((col) => {
-            if (col === 'for' || col === 'against' || col === 'percentage') return <Cell key={`${team.id}_${col}`} c={team[col]} className='hidden sm:table-cell' />
+            if (col === 'for' || col === 'against' || col === 'percentage') return <Cell key={`${team.id}_${col}`} className='hidden sm:table-cell'>{team[col]}</Cell>
             return (
-                <td
-                    key={`${team.id}_${col}`}
-                    className={`
-                    min-w-[35px]
-                    border-b border-sky-700/25
-                    ${col === 'name' ? 'text-left' : 'text-center'}
-                `}>{team[col]}</td>
+                <Cell key={`${team.id}_${col}`} className={col === 'name' ? 'text-left' : 'text-center'}>{team[col]}</Cell>
             );
         });
         row.splice(1, 0,
-            <td key={`${team.id}_logo`} className='py-2 border-b border-sky-700/25'><TeamLogo size='small' teamName={team.name} className='' /></td>
+            <Cell key={`${team.id}_logo`} className='py-2'><TeamLogo size='small' teamName={team.name} /></Cell>
         );
         return (
-            <tr key={team.id} className='odd:bg-sky-500/25 even:bg-sky-600/25 hover:even:bg-sky-800/25 hover:odd:bg-sky-300/25'>{row}</tr>
+            <Row key={team.id}>{row}</Row>
         );
     })
 
     return (
-        <div className='w-[100vw] sm:w-[95vw] md:w-[85vw] lg:w-[75vw]'>
-
-            <h2 className='text-white text-3xl mt-2 mx-2 self-start '>Ladder</h2>
-
-            <table className={`
-            m-1 sm:m-2 
-            table-auto
-            overflow-scroll
-            w-full
-            border-collapse
-            `}>
-                <thead>
-                    <tr className='font-bold border-b border-sky-700/25 text-slate-100'>
+        <Layout title='Ladder'>
+            <Table
+                heading={
+                    <Heading>
                         {colNames.map((name) => {
-                            if (name === 'Name') return <HCell key={name} c={name} className='text-left' />
-                            else if (name === 'For' || name === 'Against' || name === '%') return <HCell key={name} c={name} className='hidden sm:table-cell' />
-                            return <HCell key={name} c={name} />
+                            if (name === 'Name') return <HCell key={name} className='text-left'>{name}</HCell>
+                            else if (name === 'For' || name === 'Against' || name === '%') return <HCell key={name} className='hidden sm:table-cell'>{name}</HCell>
+                            return <HCell key={name}>{name}</HCell>
                         })}
-                    </tr>
-                </thead>
-
-                <tbody>
-                    {rows}
-                </tbody>
-
-            </table>
-        </div>
+                    </Heading>
+                }
+            >
+                {rows}
+            </Table>
+        </Layout>
     )
 }
+
+Ladder.getLayout = ((page: ReactElement) => page);

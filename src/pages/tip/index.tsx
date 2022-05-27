@@ -6,12 +6,9 @@ export async function getStaticProps() {
     if (data !== null) {
         return { redirect: { destination: `/tip/${data[0]['round_number']}`, permanent: false } }
     }
-
-
 }
 
+
 export default function Tip() {
-    return (
-        <h1 className='text-4xl'>No round selected</h1>
-    )
+    return null;
 }

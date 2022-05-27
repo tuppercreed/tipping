@@ -115,7 +115,7 @@ export default function Auth() {
             className={`
                 flex flex-col justify-center items-stretch 
                 m-2 shadow-md border-2 p-4
-                bg-white
+                bg-white text-black
             `}>
 
             {loginMenu}
